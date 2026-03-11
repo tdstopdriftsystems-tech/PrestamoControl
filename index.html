@@ -40,7 +40,7 @@
   --base-font: 15px;
   --font-head: 'Syne', sans-serif;
   --font-body: 'DM Sans', sans-serif;
-  --sidebar-w: 250px;
+  --sidebar-w: 260px;
   --radius: 12px;
   --radius-sm: 8px;
   --transition: 0.15s ease;
@@ -108,11 +108,12 @@ body {
   transition: transform 0.25s ease;
 }
 .logo {
-  padding: 24px 20px 20px;
+  padding: 20px 16px 16px;
   border-bottom: 1px solid var(--border);
+  overflow: hidden;
 }
 .logo-mark {
-  display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px; overflow: hidden;
 }
 .logo-icon {
   width: 36px; height: 36px; border-radius: 10px;
@@ -120,8 +121,9 @@ body {
   justify-content: center; font-size: 1.1rem;
 }
 .logo h1 {
-  font-family: var(--font-head); font-size: 1.15rem;
+  font-family: var(--font-head); font-size: 1rem;
   font-weight: 800; letter-spacing: -0.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .logo h1 span { color: var(--accent); }
 .logo-sub {
@@ -181,7 +183,7 @@ body {
 
 /* ── TOPBAR ── */
 .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
-.topbar-left h2 { font-family:var(--font-head); font-size:1.5rem; font-weight:700; }
+.topbar-left h2 { font-family:var(--font-head); font-size:1.4rem; font-weight:700; }
 .topbar-left .topbar-sub { font-size:0.8rem; color:var(--muted); margin-top:2px; }
 .topbar-right { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 
@@ -459,6 +461,9 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
 .pin-key.del { font-size:1rem; }
 
 /* ── TOAST ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.sync-spinner { display:inline-block; animation: spin 1s linear infinite; }
+
 .toast {
   position:fixed; bottom:24px; right:24px;
   background:var(--surface); border:1px solid var(--border);
@@ -1052,16 +1057,113 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
 
     <!-- ── BACKUP ── -->
     <div class="config-panel" id="cfgp-backup">
-      <div class="config-section-title">Respaldo Automático</div>
-      <div class="form-grid">
+
+      <!-- Google Drive Section -->
+      <div class="config-section-title">☁️ Google Drive & Sheets</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px">
+
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;line-height:1.6">
+          Conecta tu Google para sincronizar automáticamente. Crea una hoja de cálculo protegida
+          con todos tus datos: Clientes, Préstamos, Cuotas, Cobros y Resumen financiero.
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Google Client ID
+            <a href="https://console.cloud.google.com" target="_blank"
+               style="color:var(--accent);font-size:0.72rem;margin-left:6px">
+              ¿Dónde lo obtengo? →
+            </a>
+          </label>
+          <input type="text" id="cfg-google-client-id"
+                 placeholder="xxxxxx.apps.googleusercontent.com"
+                 style="font-size:0.82rem">
+          <span style="font-size:0.72rem;color:var(--muted);margin-top:3px">
+            Google Cloud Console → APIs → Credenciales → OAuth 2.0 Client ID
+          </span>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <button id="google-auth-btn" class="btn btn-primary btn-sm"
+                  onclick="GCLOUD.authorize()">
+            🔗 Conectar con Google
+          </button>
+          <span id="google-auth-status" style="font-size:0.82rem;color:var(--muted)">
+            No conectado
+          </span>
+        </div>
+
+        <div id="google-sync-panel" style="display:none">
+          <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:8px;padding:10px 13px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <div>
+                <div style="font-size:0.78rem;color:var(--muted)">Última sincronización</div>
+                <div style="font-size:0.85rem;font-weight:500" id="google-last-sync">Nunca</div>
+              </div>
+              <div id="google-sync-status" style="font-size:0.8rem;color:var(--muted)"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <button class="btn btn-primary btn-sm" onclick="GCLOUD.syncCompleto()">
+              🔄 Sincronizar ahora
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="GCLOUD.abrirHoja()">
+              📊 Abrir en Sheets
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="GCLOUD.subirBackupJSON()">
+              ☁️ Subir JSON a Drive
+            </button>
+          </div>
+
+          <a id="google-sheet-link" href="#" target="_blank"
+             style="display:none;align-items:center;gap:6px;color:var(--accent);font-size:0.82rem;text-decoration:none;margin-bottom:8px">
+            🔗 Ver hoja de Google Sheets
+          </a>
+
+          <div class="form-group">
+            <label>Frecuencia de sincronización automática</label>
+            <select id="cfg-google-sync-freq">
+              <option value="manual">Manual (solo al hacer clic)</option>
+              <option value="cada-operacion">Cada operación (más seguro)</option>
+              <option value="diario">Diario (al abrir la app)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Guía rápida de Google Cloud -->
+        <details style="margin-top:10px">
+          <summary style="cursor:pointer;font-size:0.8rem;color:var(--muted);user-select:none">
+            📋 Guía: Cómo obtener el Client ID (4 pasos)
+          </summary>
+          <div style="margin-top:10px;font-size:0.8rem;color:var(--text2);line-height:1.8;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px">
+            <b style="color:var(--accent)">Paso 1</b> — Ir a
+            <a href="https://console.cloud.google.com" target="_blank" style="color:var(--accent)">console.cloud.google.com</a><br>
+            <b style="color:var(--accent)">Paso 2</b> — Crear proyecto → nombre: <b>"PrestamoControl"</b><br>
+            <b style="color:var(--accent)">Paso 3</b> — APIs y servicios → Biblioteca → Activar:
+            <b>Google Sheets API</b> y <b>Google Drive API</b><br>
+            <b style="color:var(--accent)">Paso 4</b> — APIs y servicios → Credenciales →
+            + Crear credencial → <b>ID de cliente OAuth 2.0</b><br>
+            &nbsp;&nbsp;&nbsp;• Tipo: <b>Aplicación web</b><br>
+            &nbsp;&nbsp;&nbsp;• Orígenes JS autorizados: <b>tu URL</b> (ej: https://tuusuario.github.io)<br>
+            &nbsp;&nbsp;&nbsp;• Copiar el <b>Client ID</b> y pegarlo arriba<br>
+            <br>
+            <span style="color:var(--warn)">⚠️ También necesitas configurar la Pantalla de Consentimiento OAuth
+            (tipo "Externo", agregar tu email como usuario de prueba)</span>
+          </div>
+        </details>
+      </div>
+
+      <!-- Local Backup Section -->
+      <div class="config-section-title">💾 Respaldo Local</div>
+      <div class="form-grid" style="margin-bottom:12px">
         <div class="form-group full">
           <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.9rem">
             <input type="checkbox" id="cfg-backup-auto" style="width:18px;height:18px;accent-color:var(--accent)">
-            <span>Activar backup automático</span>
+            <span>Backup local automático activado</span>
           </label>
         </div>
         <div class="form-group full">
-          <label>Frecuencia de respaldo</label>
+          <label>Frecuencia de respaldo local</label>
           <select id="cfg-backup-freq">
             <option value="cada-operacion">🔄 Cada operación (más seguro)</option>
             <option value="diario">📅 Diario (al abrir la app)</option>
@@ -1069,36 +1171,39 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
           </select>
         </div>
       </div>
-      <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:9px;padding:11px 14px;margin:12px 0;font-size:0.82rem;color:var(--text2)">
-        💾 <b>Último backup:</b> <span id="ultimo-backup-fecha">Nunca</span>
+
+      <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:9px;padding:11px 14px;margin-bottom:12px;font-size:0.82rem;color:var(--text2)">
+        💾 <b>Último backup local:</b> <span id="ultimo-backup-fecha">Nunca</span>
       </div>
 
-      <div class="config-section-title">Exportar Ahora</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
-          <div style="font-size:1.8rem;margin-bottom:6px">📊</div>
-          <div style="font-weight:600;font-size:0.9rem;margin-bottom:4px">Excel Completo</div>
-          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:10px">5 hojas: Clientes, Préstamos,<br>Cuotas, Resumen, Cobros</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:1.6rem;margin-bottom:6px">📊</div>
+          <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px">Excel Completo</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:10px">5 hojas detalladas</div>
           <button class="btn btn-primary btn-sm" style="width:100%" onclick="PCXLSX.exportarBackupCompleto()">⬇️ Descargar .xlsx</button>
         </div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
-          <div style="font-size:1.8rem;margin-bottom:6px">💾</div>
-          <div style="font-weight:600;font-size:0.9rem;margin-bottom:4px">Backup JSON</div>
-          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:10px">Restaurable, contiene<br>todos los datos</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:1.6rem;margin-bottom:6px">💾</div>
+          <div style="font-weight:600;font-size:0.88rem;margin-bottom:4px">Backup JSON</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-bottom:10px">Restaurable completo</div>
           <button class="btn btn-ghost btn-sm" style="width:100%" onclick="PC.exportBackupJSON()">⬇️ Descargar .json</button>
         </div>
       </div>
 
-      <div class="config-section-title" style="margin-top:16px">App Móvil (PWA)</div>
+      <!-- App Móvil PWA -->
+      <div class="config-section-title">📱 App Móvil (PWA)</div>
       <div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:9px;padding:12px 14px;margin-bottom:10px;font-size:0.83rem">
-        <div style="font-weight:600;color:var(--accent);margin-bottom:4px">📱 Instalar en Android / iOS</div>
-        <div style="color:var(--text2)">Esta app funciona como aplicación nativa. En Chrome Android: menú ⋮ → "Agregar a pantalla de inicio". En Safari iOS: botón compartir → "Agregar a inicio".</div>
+        <div style="font-weight:600;color:var(--accent);margin-bottom:4px">Instalar en Android / iOS</div>
+        <div style="color:var(--text2)">Chrome Android: menú ⋮ → "Agregar a pantalla de inicio" · Safari iOS: botón compartir → "Agregar a inicio"</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-        <button class="btn btn-primary btn-sm" id="cfg-install-btn" onclick="triggerInstall()">📲 Instalar App</button>
+        <button class="btn btn-primary btn-sm" onclick="triggerInstall()">📲 Instalar App</button>
         <button class="btn btn-ghost btn-sm" onclick="checkPWAStatus()">🔍 Estado PWA</button>
       </div>
-      <div class="config-section-title" style="margin-top:0">Restaurar desde Backup</div>
+
+      <!-- Restaurar -->
+      <div class="config-section-title">📥 Restaurar desde Backup</div>
       <div style="background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:9px;padding:11px 14px;margin-bottom:10px;font-size:0.82rem;color:var(--danger)">
         ⚠️ Restaurar reemplaza <b>todos</b> los datos actuales. Haz un backup primero.
       </div>
@@ -1106,10 +1211,13 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
         <label>Archivo JSON de backup</label>
         <input type="file" id="import-file" accept=".json" style="color:var(--text);background:var(--surface2);border:1px solid var(--border);padding:8px;border-radius:var(--radius-sm);width:100%">
       </div>
-      <button class="btn btn-danger" style="margin-top:8px" onclick="MODAL.importarBackup()">📥 Restaurar desde archivo</button>
+      <button class="btn btn-danger" style="margin-top:8px" onclick="MODAL.importarBackup()">
+        📥 Restaurar desde archivo
+      </button>
+
     </div>
 
-    <!-- ── NOTIFICACIONES ── -->
+        <!-- ── NOTIFICACIONES ── -->
     <div class="config-panel" id="cfgp-notif">
       <div class="config-section-title">Recordatorios de Pago</div>
       <div class="form-grid">
@@ -1337,6 +1445,13 @@ const PC = {
     pinEnabled: false,
     pinHash: null,
     pinTimeout: 15, // minutos
+
+    // Google Drive / Sheets
+    googleClientId: '',
+    googleSheetId: null,
+    googleFolderId: null,
+    googleSyncFreq: 'manual', // manual | cada-operacion | diario
+    ultimoSyncGoogle: null,
 
     // Notificaciones
     whatsappDefaultTel: '',
@@ -2968,6 +3083,23 @@ const MODAL = {
     PC.config.backupAuto = document.getElementById('cfg-backup-auto').checked;
     // Notif
     PC.config.recordatoriosDias = parseInt(document.getElementById('cfg-recordatorio-dias').value)||1;
+    // Google
+    const gcIdEl = document.getElementById('cfg-google-client-id');
+    if(gcIdEl) {
+      const newClientId = gcIdEl.value.trim();
+      if(newClientId !== PC.config.googleClientId) {
+        PC.config.googleClientId = newClientId;
+        // Re-init Google if client ID changed
+        if(newClientId && typeof GCLOUD !== 'undefined') {
+          GCLOUD.state.initialized = false;
+          GCLOUD.init().then(ok => {
+            if(ok) UI.toast('Google configurado. Haz clic en Conectar.', '🔗');
+          });
+        }
+      }
+    }
+    const gcSyncEl = document.getElementById('cfg-google-sync-freq');
+    if(gcSyncEl) PC.config.googleSyncFreq = gcSyncEl.value;
     PC.saveConfig();
     PC.applyTheme();
     PC.applyFontSize();
@@ -3030,6 +3162,650 @@ document.addEventListener('click', e => {
 </script>
 
 <script>
+
+// ══════════════════════════════════════════════════
+//  GOOGLE DRIVE & SHEETS MODULE
+// ══════════════════════════════════════════════════
+// ============================================================
+//  PRESTAMOCONTROL — GOOGLE DRIVE & SHEETS MODULE v1.0
+//  
+//  Flujo OAuth 2.0 PKCE (sin servidor, 100% cliente)
+//  Requiere: Client ID de Google Cloud Console
+// ============================================================
+
+const GCLOUD = {
+
+  // ── CONSTANTES ───────────────────────────────────────────
+  SCOPES: [
+    'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file',
+  ].join(' '),
+
+  DISCOVERY_DOCS: [
+    'https://sheets.googleapis.com/$discovery/rest?version=v4',
+    'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest',
+  ],
+
+  // Colores institucionales para la hoja
+  COLORS: {
+    header:     { red: 0.04, green: 0.05, blue: 0.08 },   // #0a0c10
+    headerText: { red: 0.00, green: 0.90, blue: 0.63 },   // #00e5a0
+    accent:     { red: 1.00, green: 0.42, blue: 0.21 },   // #ff6b35
+    rowEven:    { red: 0.97, green: 0.98, blue: 1.00 },
+    rowOdd:     { red: 1.00, green: 1.00, blue: 1.00 },
+    danger:     { red: 1.00, green: 0.28, blue: 0.34 },
+    success:    { red: 0.00, green: 0.90, blue: 0.63 },
+    warn:       { red: 1.00, green: 0.65, blue: 0.01 },
+  },
+
+  // ── STATE ────────────────────────────────────────────────
+  state: {
+    initialized: false,
+    authorized: false,
+    tokenClient: null,
+    spreadsheetId: null,
+    folderId: null,
+    lastSync: null,
+    syncInProgress: false,
+  },
+
+  // ── INIT ─────────────────────────────────────────────────
+  async init() {
+    const clientId = PC.config.googleClientId;
+    if (!clientId) {
+      console.log('[GCLOUD] No client ID configured');
+      return false;
+    }
+
+    return new Promise((resolve) => {
+      // Load Google Identity Services
+      const script1 = document.createElement('script');
+      script1.src = 'https://accounts.google.com/gsi/client';
+      script1.onload = () => {
+        // Load Google API client
+        const script2 = document.createElement('script');
+        script2.src = 'https://apis.google.com/js/api.js';
+        script2.onload = () => {
+          gapi.load('client', async () => {
+            try {
+              await gapi.client.init({
+                discoveryDocs: this.DISCOVERY_DOCS,
+              });
+
+              // Init token client (OAuth 2.0 implicit flow)
+              this.state.tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: clientId,
+                scope: this.SCOPES,
+                callback: (response) => this._handleAuthResponse(response),
+              });
+
+              this.state.initialized = true;
+
+              // Restore saved tokens
+              const saved = localStorage.getItem('pc_google_token');
+              if (saved) {
+                const token = JSON.parse(saved);
+                if (token.expiry > Date.now()) {
+                  gapi.client.setToken(token);
+                  this.state.authorized = true;
+                  console.log('[GCLOUD] Restored saved token');
+                }
+              }
+
+              // Restore spreadsheet/folder IDs
+              if (PC.config.googleSheetId)  this.state.spreadsheetId = PC.config.googleSheetId;
+              if (PC.config.googleFolderId) this.state.folderId = PC.config.googleFolderId;
+
+              console.log('[GCLOUD] Initialized OK');
+              resolve(true);
+            } catch (err) {
+              console.error('[GCLOUD] Init error:', err);
+              resolve(false);
+            }
+          });
+        };
+        document.head.appendChild(script2);
+      };
+      document.head.appendChild(script1);
+    });
+  },
+
+  // ── AUTH ─────────────────────────────────────────────────
+  authorize() {
+    if (!this.state.initialized) {
+      UI.toast('Configura el Client ID de Google primero', '⚠️');
+      return;
+    }
+    // Check if already authorized
+    const token = gapi.client.getToken();
+    if (token && this.state.authorized) {
+      UI.toast('Ya estás conectado a Google ✅', '✅');
+      this.updateAuthUI(true);
+      return;
+    }
+    // Prompt consent
+    this.state.tokenClient.requestAccessToken({ prompt: 'consent' });
+  },
+
+  _handleAuthResponse(response) {
+    if (response.error) {
+      console.error('[GCLOUD] Auth error:', response.error);
+      UI.toast('Error de autenticación con Google: ' + response.error, '❌');
+      return;
+    }
+    this.state.authorized = true;
+    // Save token with expiry
+    const token = gapi.client.getToken();
+    token.expiry = Date.now() + (token.expires_in * 1000);
+    localStorage.setItem('pc_google_token', JSON.stringify(token));
+    console.log('[GCLOUD] Authorized!');
+    UI.toast('Conectado a Google Drive ✅', '🔗');
+    this.updateAuthUI(true);
+    // Auto-create sheet if first time
+    if (!this.state.spreadsheetId) {
+      setTimeout(() => this.crearHojaCompleta(), 500);
+    }
+  },
+
+  async revokeAccess() {
+    const token = gapi.client.getToken();
+    if (token) {
+      google.accounts.oauth2.revoke(token.access_token);
+      gapi.client.setToken('');
+      localStorage.removeItem('pc_google_token');
+      this.state.authorized = false;
+      this.state.spreadsheetId = null;
+      this.state.folderId = null;
+      PC.config.googleSheetId = null;
+      PC.config.googleFolderId = null;
+      PC.saveConfig();
+      this.updateAuthUI(false);
+      UI.toast('Sesión de Google cerrada', '👋');
+    }
+  },
+
+  updateAuthUI(authorized) {
+    const btn = document.getElementById('google-auth-btn');
+    const status = document.getElementById('google-auth-status');
+    const syncPanel = document.getElementById('google-sync-panel');
+    if (btn) {
+      btn.textContent = authorized ? '🔓 Desconectar Google' : '🔗 Conectar con Google';
+      btn.className = authorized ? 'btn btn-danger btn-sm' : 'btn btn-primary btn-sm';
+      btn.onclick = authorized ? () => this.revokeAccess() : () => this.authorize();
+    }
+    if (status) {
+      status.innerHTML = authorized
+        ? `<span style="color:var(--accent)">✅ Conectado</span>${this.state.spreadsheetId ? ' · Hoja vinculada' : ' · Sin hoja aún'}`
+        : '<span style="color:var(--muted)">No conectado</span>';
+    }
+    if (syncPanel) syncPanel.style.display = authorized ? 'block' : 'none';
+    // Update last sync
+    const ls = document.getElementById('google-last-sync');
+    if (ls && this.state.lastSync) {
+      ls.textContent = new Date(this.state.lastSync).toLocaleString('es-MX');
+    }
+  },
+
+  // ── CREAR HOJA COMPLETA ──────────────────────────────────
+  async crearHojaCompleta() {
+    if (!this.state.authorized) { this.authorize(); return; }
+    this._setSyncStatus('Creando hoja de Google Sheets...', true);
+
+    try {
+      // 1. Crear carpeta en Drive
+      const folderRes = await gapi.client.drive.files.create({
+        resource: {
+          name: `PrestamoControl — ${PC.config.prestamistaNombre || 'Backup'}`,
+          mimeType: 'application/vnd.google-apps.folder',
+        },
+        fields: 'id,name',
+      });
+      this.state.folderId = folderRes.result.id;
+      PC.config.googleFolderId = this.state.folderId;
+
+      // 2. Crear Spreadsheet dentro de la carpeta
+      const ssRes = await gapi.client.sheets.spreadsheets.create({
+        resource: {
+          properties: {
+            title: `PrestamoControl — ${PC.config.prestamistaNombre || 'Datos'} — ${PC.today()}`,
+            locale: 'es_MX',
+            timeZone: 'America/Mexico_City',
+          },
+          sheets: [
+            { properties: { title: '📊 Resumen',          sheetId: 0, tabColor: { red:0.00, green:0.90, blue:0.63 } } },
+            { properties: { title: '👥 Clientes',         sheetId: 1, tabColor: { red:0.12, green:0.47, blue:1.00 } } },
+            { properties: { title: '💰 Préstamos',        sheetId: 2, tabColor: { red:1.00, green:0.42, blue:0.21 } } },
+            { properties: { title: '📅 Cuotas',           sheetId: 3, tabColor: { red:1.00, green:0.65, blue:0.01 } } },
+            { properties: { title: '✅ Cobros del Día',   sheetId: 4, tabColor: { red:0.49, green:0.43, blue:0.98 } } },
+            { properties: { title: '📝 Log Cambios',      sheetId: 5, tabColor: { red:0.60, green:0.60, blue:0.65 } } },
+          ],
+        },
+      });
+
+      this.state.spreadsheetId = ssRes.result.spreadsheetId;
+      PC.config.googleSheetId = this.state.spreadsheetId;
+      PC.saveConfig();
+
+      // 3. Mover el spreadsheet a la carpeta
+      await gapi.client.drive.files.update({
+        fileId: this.state.spreadsheetId,
+        addParents: this.state.folderId,
+        fields: 'id, parents',
+      });
+
+      // 4. Formatear todas las hojas
+      await this._formatearHojas();
+
+      // 5. Primer sync de datos
+      await this.syncCompleto(true);
+
+      // 6. Proteger hojas
+      await this.protegerHojas();
+
+      this._setSyncStatus('¡Hoja creada y sincronizada!', false);
+      UI.toast('Hoja de Google Sheets creada ✅', '📊');
+
+      // Abrir la hoja
+      const url = `https://docs.google.com/spreadsheets/d/${this.state.spreadsheetId}`;
+      document.getElementById('google-sheet-link').href = url;
+      document.getElementById('google-sheet-link').style.display = 'inline-flex';
+      this.updateAuthUI(true);
+
+    } catch (err) {
+      console.error('[GCLOUD] Create sheet error:', err);
+      this._setSyncStatus('Error: ' + (err.result?.error?.message || err.message), false);
+      UI.toast('Error al crear hoja: ' + (err.result?.error?.message || 'Ver consola'), '❌');
+    }
+  },
+
+  // ── FORMATO DE HOJAS ─────────────────────────────────────
+  async _formatearHojas() {
+    const ssId = this.state.spreadsheetId;
+    const requests = [];
+
+    // Para cada hoja: freeze primera fila, bold headers, colores
+    const sheets = [
+      { sheetId: 0, cols: 2 },
+      { sheetId: 1, cols: 10 },
+      { sheetId: 2, cols: 13 },
+      { sheetId: 3, cols: 9 },
+      { sheetId: 4, cols: 8 },
+      { sheetId: 5, cols: 6 },
+    ];
+
+    sheets.forEach(({ sheetId, cols }) => {
+      // Freeze row 1
+      requests.push({
+        updateSheetProperties: {
+          properties: { sheetId, gridProperties: { frozenRowCount: 1 } },
+          fields: 'gridProperties.frozenRowCount',
+        },
+      });
+      // Header row background (dark)
+      requests.push({
+        repeatCell: {
+          range: { sheetId, startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: cols },
+          cell: {
+            userEnteredFormat: {
+              backgroundColor: this.COLORS.header,
+              textFormat: { bold: true, foregroundColor: this.COLORS.headerText, fontSize: 10 },
+              horizontalAlignment: 'LEFT',
+              padding: { top: 6, bottom: 6, left: 8, right: 8 },
+            },
+          },
+          fields: 'userEnteredFormat(backgroundColor,textFormat,horizontalAlignment,padding)',
+        },
+      });
+      // Auto-resize columns
+      requests.push({
+        autoResizeDimensions: {
+          dimensions: { sheetId, dimension: 'COLUMNS', startIndex: 0, endIndex: cols },
+        },
+      });
+    });
+
+    await gapi.client.sheets.spreadsheets.batchUpdate({
+      spreadsheetId: ssId,
+      resource: { requests },
+    });
+  },
+
+  // ── PROTEGER HOJAS ───────────────────────────────────────
+  async protegerHojas() {
+    const ssId = this.state.spreadsheetId;
+    const requests = [];
+    const sheetIds = [0, 1, 2, 3, 4]; // Todas excepto Log
+
+    sheetIds.forEach(sheetId => {
+      requests.push({
+        addProtectedRange: {
+          protectedRange: {
+            range: { sheetId },
+            description: 'Hoja de solo lectura — generada por PrestamoControl. No editar manualmente.',
+            warningOnly: true, // Muestra advertencia pero permite editar
+            // Para bloqueo total (solo el dueño puede editar):
+            // editors: { users: ['tu@gmail.com'] }
+          },
+        },
+      });
+    });
+
+    try {
+      await gapi.client.sheets.spreadsheets.batchUpdate({
+        spreadsheetId: ssId,
+        resource: { requests },
+      });
+      console.log('[GCLOUD] Sheets protected');
+    } catch (e) {
+      console.warn('[GCLOUD] Could not protect sheets (may need owner):', e);
+    }
+  },
+
+  // ── SYNC COMPLETO ────────────────────────────────────────
+  async syncCompleto(silent = false) {
+    if (!this.state.authorized || !this.state.spreadsheetId) {
+      if (!silent) UI.toast('Conecta Google Drive primero', '⚠️');
+      return false;
+    }
+    if (this.state.syncInProgress) return false;
+    this.state.syncInProgress = true;
+    if (!silent) this._setSyncStatus('Sincronizando...', true);
+
+    try {
+      const ssId = this.state.spreadsheetId;
+      const hoy = PC.today();
+      const now = new Date().toLocaleString('es-MX');
+
+      // ── Hoja 0: Resumen ──────────────────────────────
+      const activos  = PC.state.prestamos.filter(p => PC.estadoPrestamo(p) === 'activo');
+      const vencidos = PC.state.prestamos.filter(p => PC.estadoPrestamo(p) === 'vencido');
+      const pagados  = PC.state.prestamos.filter(p => PC.estadoPrestamo(p) === 'pagado');
+      const porCobrar = [...activos,...vencidos].reduce((a,p) => a+(PC.totalPrestamo(p)-PC.totalPagado(p)),0);
+      const cobrado   = PC.state.prestamos.reduce((a,p) => a+PC.totalPagado(p),0);
+      const intereses = PC.state.prestamos.reduce((a,p) => {
+        if(!PC.totalPrestamo(p)) return a;
+        return a+PC.totalPagado(p)*((PC.totalPrestamo(p)-p.monto)/PC.totalPrestamo(p));
+      },0);
+
+      const resumenData = [
+        ['PrestamoControl — Resumen Financiero', '', '', ''],
+        [`Generado: ${now}`, '', 'Prestamista:', PC.config.prestamistaNombre || '—'],
+        ['', '', '', ''],
+        ['INDICADOR', 'VALOR', '', ''],
+        ['Total clientes',           PC.state.clientes.length],
+        ['Total préstamos',          PC.state.prestamos.length],
+        ['Préstamos activos',        activos.length],
+        ['Préstamos vencidos',       vencidos.length],
+        ['Préstamos pagados',        pagados.length],
+        ['', '', '', ''],
+        ['Capital total prestado',   porCobrar + cobrado],
+        ['Por cobrar (saldo)',        porCobrar],
+        ['Total cobrado',            cobrado],
+        ['Intereses cobrados',       intereses],
+        ['', '', '', ''],
+        ['Última sincronización',    now],
+        ['Versión app',              '2.0.0'],
+      ];
+
+      // ── Hoja 1: Clientes ─────────────────────────────
+      const clientesHeaders = ['ID','Nombre','Teléfono','Teléfono 2','Email','Dirección','Referencia/Aval','Ocupación','Notas','Fecha Alta'];
+      const clientesData = [clientesHeaders, ...PC.state.clientes.map(c => [
+        c.id, c.nombre, c.telefono||'', c.telefono2||'', c.email||'',
+        c.direccion||'', c.referencia||'', c.ocupacion||'', c.notas||'', c.creado,
+      ])];
+
+      // ── Hoja 2: Préstamos ────────────────────────────
+      const prestamosHeaders = ['ID','Cliente','Capital','Tasa %','Cuotas','Frecuencia','Tipo Interés','Total a Pagar','Pagado','Saldo','Estado','Inicio','Notas'];
+      const prestamosData = [prestamosHeaders, ...PC.state.prestamos.map(p => {
+        const cl = PC.getCliente(p.clienteId);
+        return [
+          p.id, cl.nombre, p.monto, p.tasa, p.numCuotas, p.frecuencia, p.tipoInteres,
+          PC.totalPrestamo(p), PC.totalPagado(p), PC.totalPrestamo(p)-PC.totalPagado(p),
+          PC.estadoPrestamo(p), p.fechaInicio, p.notas||'',
+        ];
+      })];
+
+      // ── Hoja 3: Cuotas ───────────────────────────────
+      const cuotasHeaders = ['Préstamo ID','Cliente','Cuota #','Fecha Esperada','Monto','Pagado','Fecha Pago','Monto Pagado','Nota'];
+      const cuotasData = [cuotasHeaders];
+      PC.state.prestamos.forEach(p => {
+        const cl = PC.getCliente(p.clienteId);
+        p.cuotas.forEach(c => cuotasData.push([
+          p.id, cl.nombre, c.num, c.fecha, c.monto,
+          c.pagado ? 'SÍ' : 'NO', c.fechaPago||'', c.montoPagado||0, c.notaPago||'',
+        ]));
+      });
+
+      // ── Hoja 4: Cobros del Día ───────────────────────
+      const cobrosHeaders = ['Cliente','Teléfono','Dirección','Préstamo #','Cuota #','Fecha','Monto','Días Retraso'];
+      const cobrosData = [cobrosHeaders];
+      PC.state.prestamos.forEach(p => {
+        const cl = PC.getCliente(p.clienteId);
+        p.cuotas.filter(c => !c.pagado && c.fecha <= hoy).forEach(c => {
+          cobrosData.push([
+            cl.nombre, cl.telefono||'', cl.direccion||'',
+            p.id, c.num, c.fecha, c.monto, PC.diffDays(hoy, c.fecha),
+          ]);
+        });
+      });
+
+      // ── Hoja 5: Log de cambios ───────────────────────
+      const logEntry = [now, 'SYNC', `${PC.state.prestamos.length} préstamos`, `${PC.state.clientes.length} clientes`, `Sync desde app`, PC.config.prestamistaNombre||''];
+
+      // ── Batch update all sheets ──────────────────────
+      const valueRanges = [
+        { range: '📊 Resumen!A1',       values: resumenData  },
+        { range: '👥 Clientes!A1',      values: clientesData },
+        { range: '💰 Préstamos!A1',     values: prestamosData },
+        { range: '📅 Cuotas!A1',        values: cuotasData   },
+        { range: '✅ Cobros del Día!A1', values: cobrosData   },
+      ];
+
+      // Clear first, then write
+      await gapi.client.sheets.spreadsheets.values.batchClear({
+        spreadsheetId: ssId,
+        resource: { ranges: valueRanges.map(r => r.range.split('!')[0] + '!A:Z') },
+      });
+
+      await gapi.client.sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId: ssId,
+        resource: {
+          valueInputOption: 'USER_ENTERED',
+          data: valueRanges,
+        },
+      });
+
+      // Append log entry
+      await gapi.client.sheets.spreadsheets.values.append({
+        spreadsheetId: ssId,
+        range: '📝 Log Cambios!A:F',
+        valueInputOption: 'USER_ENTERED',
+        resource: { values: [logEntry] },
+      });
+
+      // Apply conditional formatting for status/overdue
+      await this._aplicarFormato();
+
+      // Update state
+      this.state.lastSync = Date.now();
+      this.state.syncInProgress = false;
+      PC.config.ultimoSyncGoogle = new Date().toISOString();
+      PC.saveConfig();
+
+      if (!silent) {
+        this._setSyncStatus(`Última sync: ${new Date().toLocaleTimeString('es-MX')}`, false);
+        UI.toast('Sincronizado con Google Sheets ✅', '📊');
+      }
+
+      // Update UI counters
+      const ls = document.getElementById('google-last-sync');
+      if (ls) ls.textContent = new Date().toLocaleString('es-MX');
+
+      return true;
+
+    } catch (err) {
+      this.state.syncInProgress = false;
+      console.error('[GCLOUD] Sync error:', err);
+      const msg = err.result?.error?.message || err.message || 'Error desconocido';
+      if (!silent) {
+        this._setSyncStatus('Error: ' + msg, false);
+        UI.toast('Error en sync: ' + msg, '❌');
+      }
+      // Token expired?
+      if (err.status === 401) {
+        this.state.authorized = false;
+        localStorage.removeItem('pc_google_token');
+        this.updateAuthUI(false);
+        UI.toast('Sesión expirada — vuelve a conectar con Google', '🔒');
+      }
+      return false;
+    }
+  },
+
+  // ── FORMATO CONDICIONAL ──────────────────────────────────
+  async _aplicarFormato() {
+    const ssId = this.state.spreadsheetId;
+    const requests = [];
+
+    // Préstamos: colorear por estado (col J = índice 10)
+    const estadoFormats = [
+      { val: 'vencido', bg: { red:1.0, green:0.90, blue:0.90 } },
+      { val: 'activo',  bg: { red:0.90, green:1.0, blue:0.95 } },
+      { val: 'pagado',  bg: { red:0.93, green:0.93, blue:1.0 } },
+    ];
+
+    estadoFormats.forEach(({ val, bg }) => {
+      requests.push({
+        addConditionalFormatRule: {
+          rule: {
+            ranges: [{ sheetId: 2, startRowIndex: 1, endRowIndex: 500, startColumnIndex: 0, endColumnIndex: 13 }],
+            booleanRule: {
+              condition: { type: 'TEXT_EQ', values: [{ userEnteredValue: val }] },
+              format: { backgroundColor: bg },
+            },
+          },
+          index: 0,
+        },
+      });
+    });
+
+    // Cobros: días retraso > 0 = rojo (col H = índice 7)
+    requests.push({
+      addConditionalFormatRule: {
+        rule: {
+          ranges: [{ sheetId: 4, startRowIndex: 1, endRowIndex: 500, startColumnIndex: 0, endColumnIndex: 8 }],
+          booleanRule: {
+            condition: { type: 'NUMBER_GREATER', values: [{ userEnteredValue: '0' }] },
+            format: { backgroundColor: { red:1.0, green:0.92, blue:0.92 } },
+          },
+        },
+        index: 0,
+      },
+    });
+
+    try {
+      await gapi.client.sheets.spreadsheets.batchUpdate({
+        spreadsheetId: ssId,
+        resource: { requests },
+      });
+    } catch (e) {
+      console.warn('[GCLOUD] Conditional format error (non-fatal):', e);
+    }
+  },
+
+  // ── AUTO-SYNC HOOK ───────────────────────────────────────
+  // Llamado desde PC.saveState() si está configurado
+  async autoSync() {
+    if (!this.state.authorized || !this.state.spreadsheetId) return;
+    const freq = PC.config.googleSyncFreq || 'manual';
+    if (freq === 'manual') return;
+    if (freq === 'cada-operacion') {
+      await this.syncCompleto(true);
+      return;
+    }
+    if (freq === 'diario') {
+      const lastSync = PC.config.ultimoSyncGoogle;
+      if (lastSync) {
+        const horasDesde = (Date.now() - new Date(lastSync)) / 3600000;
+        if (horasDesde < 24) return;
+      }
+      await this.syncCompleto(true);
+    }
+  },
+
+  // ── BACKUP JSON A DRIVE ──────────────────────────────────
+  async subirBackupJSON() {
+    if (!this.state.authorized) { this.authorize(); return; }
+    try {
+      const data = {
+        version: '2.0.0',
+        fecha: new Date().toISOString(),
+        state: PC.state,
+        config: { ...PC.config, pinHash: null },
+      };
+      const content = JSON.stringify(data, null, 2);
+      const filename = `PrestamoControl_backup_${PC.today()}.json`;
+
+      // Create or update file in Drive folder
+      const metadata = {
+        name: filename,
+        mimeType: 'application/json',
+        ...(this.state.folderId && { parents: [this.state.folderId] }),
+      };
+
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', new Blob([content], { type: 'application/json' }));
+
+      const token = gapi.client.getToken();
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token.access_token}` },
+        body: form,
+      });
+
+      if (res.ok) {
+        UI.toast(`Backup subido a Drive: ${filename} ✅`, '☁️');
+        return true;
+      }
+      throw new Error('Upload failed: ' + res.status);
+    } catch (err) {
+      console.error('[GCLOUD] Upload error:', err);
+      UI.toast('Error al subir backup: ' + err.message, '❌');
+      return false;
+    }
+  },
+
+  // ── ABRIR HOJA ───────────────────────────────────────────
+  abrirHoja() {
+    if (this.state.spreadsheetId) {
+      window.open(`https://docs.google.com/spreadsheets/d/${this.state.spreadsheetId}`, '_blank');
+    } else {
+      UI.toast('No hay hoja vinculada aún', '⚠️');
+    }
+  },
+
+  // ── UI HELPERS ───────────────────────────────────────────
+  _setSyncStatus(msg, loading) {
+    const el = document.getElementById('google-sync-status');
+    if (!el) return;
+    el.innerHTML = loading
+      ? `<span class="sync-spinner">⟳</span> ${msg}`
+      : msg;
+  },
+
+  today() { return PC.today(); },
+};
+
+// Hook into PC.saveState to trigger auto-sync
+const _origSaveState = PC.saveState.bind(PC);
+PC.saveState = function() {
+  _origSaveState();
+  if (typeof GCLOUD !== 'undefined' && GCLOUD.state.authorized) {
+    GCLOUD.autoSync();
+  }
+};
+
 
 // ══════════════════════════════════════════════════
 //  CONFIG UI HELPERS
@@ -3213,6 +3989,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   UI.init();
+
+  // Init Google Drive integration
+  if (PC.config.googleClientId) {
+    GCLOUD.init().then(ok => {
+      if (ok && GCLOUD.state.authorized) {
+        console.log('[Boot] Google auto-connected');
+        GCLOUD.updateAuthUI(true);
+        // Auto sync if configured
+        GCLOUD.autoSync();
+      }
+    });
+  }
 
 
   // ══════════════════════════════════════════════════
