@@ -1,0 +1,3406 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0d0f14">
+<title>PrestamoControl · v2.0</title>
+
+<!-- PWA manifest inline -->
+<link rel="manifest" href="manifest.json">
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PrestamoControl">
+<link rel="apple-touch-icon" href="icons/icon-180x180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
+<!-- Splash screen colors -->
+<meta name="msapplication-TileImage" content="icons/icon-144x144.png">
+<meta name="msapplication-TileColor" content="#0a0c10">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- External libs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+
+<style>
+/* ══════════════════════════════════════════════════
+   PRESTAMOCONTROL — DESIGN SYSTEM
+══════════════════════════════════════════════════ */
+:root {
+  --accent: #00e5a0;
+  --accent-dim: #00e5a022;
+  --accent2: #ff6b35;
+  --accent3: #7c6dfa;
+  --warn: #ffa502;
+  --danger: #ff4757;
+  --success: #00e5a0;
+  --base-font: 15px;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --sidebar-w: 250px;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: 0.15s ease;
+}
+
+/* ── DARK THEME (default) ── */
+[data-theme="dark"] {
+  --bg: #0a0c10;
+  --surface: #111419;
+  --surface2: #181c24;
+  --surface3: #1e2330;
+  --border: #252b3b;
+  --text: #e8ecf4;
+  --text2: #b0bbd4;
+  --muted: #5e6a84;
+  --shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+/* ── LIGHT THEME ── */
+[data-theme="light"] {
+  --bg: #f0f2f8;
+  --surface: #ffffff;
+  --surface2: #f5f7fc;
+  --surface3: #eaecf5;
+  --border: #dde1ef;
+  --text: #0d1120;
+  --text2: #3d4a6b;
+  --muted: #8892ab;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+/* ── HIGH CONTRAST ── */
+[data-theme="high-contrast"] {
+  --bg: #000000;
+  --surface: #0d0d0d;
+  --surface2: #1a1a1a;
+  --surface3: #222222;
+  --border: #444444;
+  --text: #ffffff;
+  --text2: #dddddd;
+  --muted: #aaaaaa;
+  --shadow: 0 4px 24px rgba(0,0,0,0.9);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { font-size: var(--base-font); }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+/* ══════════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════════ */
+.sidebar {
+  position: fixed; left:0; top:0; bottom:0;
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  z-index: 100;
+  transition: transform 0.25s ease;
+}
+.logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+}
+.logo-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--accent); display: flex; align-items: center;
+  justify-content: center; font-size: 1.1rem;
+}
+.logo h1 {
+  font-family: var(--font-head); font-size: 1.15rem;
+  font-weight: 800; letter-spacing: -0.3px;
+}
+.logo h1 span { color: var(--accent); }
+.logo-sub {
+  font-size: 0.7rem; color: var(--muted);
+  letter-spacing: 0.3px; padding-left: 46px;
+}
+#sb-nombre { font-size: 0.75rem; color: var(--text2); font-weight: 500; }
+
+.nav-section {
+  font-size: 0.65rem; color: var(--muted);
+  padding: 14px 20px 4px;
+  letter-spacing: 1.2px; text-transform: uppercase;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 20px; cursor: pointer;
+  font-size: 0.88rem; color: var(--muted);
+  transition: all var(--transition);
+  border-left: 3px solid transparent;
+  position: relative; user-select: none;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-badge {
+  display: none; position: absolute; right: 12px; top: 50%;
+  transform: translateY(-50%);
+  background: var(--danger); color: white; font-size: 0.65rem;
+  font-weight: 700; padding: 1px 6px; border-radius: 20px;
+}
+
+.sidebar-bottom { margin-top: auto; padding: 16px; }
+.capital-pill {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px;
+}
+.capital-pill .cp-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.capital-pill .cp-val { font-family: var(--font-head); font-size: 1.3rem; font-weight: 700; color: var(--accent); }
+.sidebar-actions { display: flex; flex-direction:column; gap: 6px; margin-top: 10px; }
+.sa-btn {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 14px; border-radius:var(--radius-sm); cursor:pointer;
+  border:1px solid var(--border); background:var(--surface2); color:var(--text2);
+  transition:all var(--transition); font-size:0.85rem; font-family:var(--font-body);
+  width:100%; text-align:left;
+}
+.sa-btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); }
+.sa-btn.sa-config { border-color:var(--accent); color:var(--accent); background:var(--accent-dim); font-weight:600; }
+.sa-btn.sa-config:hover { background:var(--accent); color:#0a0c10; }
+.sa-btn .sa-icon { font-size:1rem; flex-shrink:0; }
+.sa-label { font-size:0.84rem; }
+
+/* ══════════════════════════════════════════════════
+   MAIN
+══════════════════════════════════════════════════ */
+.main { margin-left: var(--sidebar-w); padding: 28px 32px; min-height: 100vh; }
+
+/* ── TOPBAR ── */
+.topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+.topbar-left h2 { font-family:var(--font-head); font-size:1.5rem; font-weight:700; }
+.topbar-left .topbar-sub { font-size:0.8rem; color:var(--muted); margin-top:2px; }
+.topbar-right { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 8px 18px; border:none; border-radius:var(--radius-sm);
+  font-family:var(--font-body); font-size:0.85rem; font-weight:500;
+  cursor:pointer; transition:all var(--transition);
+  display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+  white-space:nowrap;
+}
+.btn-primary { background:var(--accent); color:#0a0c10; }
+.btn-primary:hover { filter:brightness(1.1); transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,229,160,0.3); }
+.btn-ghost { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+.btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+.btn-danger { background:rgba(255,71,87,0.12); color:var(--danger); border:1px solid rgba(255,71,87,0.25); }
+.btn-danger:hover { background:rgba(255,71,87,0.2); }
+.btn-sm { padding:5px 12px; font-size:0.78rem; }
+.btn-icon { padding:7px; width:32px; height:32px; justify-content:center; }
+
+/* ── VIEWS ── */
+.view { display:none; }
+.view.active { display:block; }
+
+/* ── KPI CARDS ── */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+.kpi-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:18px; position:relative; overflow:hidden;
+}
+.kpi-card::after { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--c,var(--accent)); }
+.kpi-label { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:6px; }
+.kpi-val { font-family:var(--font-head); font-size:1.6rem; font-weight:700; }
+.kpi-sub { font-size:0.72rem; color:var(--muted); margin-top:3px; }
+.kpi-icon { position:absolute; right:14px; top:14px; font-size:1.8rem; opacity:0.12; }
+
+/* ── SECTION ── */
+.section {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); overflow:hidden; margin-bottom:20px;
+}
+.section-header {
+  padding:16px 20px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.section-header h3 { font-family:var(--font-head); font-size:0.95rem; font-weight:600; }
+
+/* ── FILTERS ── */
+.filters { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.search-box {
+  display:flex; align-items:center; gap:7px;
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:6px 12px;
+  transition:border-color var(--transition);
+}
+.search-box:focus-within { border-color:var(--accent); }
+.search-box input { background:none; border:none; outline:none; color:var(--text); font-family:var(--font-body); font-size:0.85rem; width:160px; }
+.search-box input::placeholder { color:var(--muted); }
+.search-box svg { color:var(--muted); width:14px; height:14px; flex-shrink:0; }
+select.filter-sel {
+  background:var(--surface2); border:1px solid var(--border); color:var(--text);
+  padding:6px 10px; border-radius:var(--radius-sm);
+  font-family:var(--font-body); font-size:0.82rem; cursor:pointer; outline:none;
+}
+
+/* ── TABLE ── */
+table { width:100%; border-collapse:collapse; }
+th {
+  padding:10px 18px; text-align:left; font-size:0.68rem; color:var(--muted);
+  text-transform:uppercase; letter-spacing:0.8px;
+  border-bottom:1px solid var(--border); background:rgba(255,255,255,0.01);
+}
+td { padding:12px 18px; font-size:0.87rem; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+.tr-link { cursor:pointer; transition:background var(--transition); }
+.tr-link:hover td { background:rgba(255,255,255,0.02); }
+.td-name { font-weight:500; }
+.td-amount { font-family:var(--font-head); font-weight:600; }
+.td-amount.green { color:var(--accent); }
+
+/* ── AVATAR ── */
+.avatar {
+  display:inline-flex; align-items:center; justify-content:center;
+  border-radius:8px; font-weight:700; flex-shrink:0; margin-right:8px;
+}
+
+/* ── BADGES ── */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:3px 9px; border-radius:20px; font-size:0.72rem; font-weight:500;
+}
+.badge::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; }
+.badge-active { background:rgba(0,229,160,0.1); color:var(--accent); }
+.badge-late { background:rgba(255,71,87,0.1); color:var(--danger); }
+.badge-paid { background:rgba(124,109,250,0.1); color:var(--accent3); }
+.badge-pending { background:rgba(255,165,2,0.1); color:var(--warn); }
+
+/* ── PROGRESS ── */
+.progress-bar { height:4px; background:var(--surface2); border-radius:2px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width 0.5s; }
+
+/* ── ALERT BAND ── */
+.alert-band {
+  background:rgba(255,71,87,0.08); border-bottom:1px solid rgba(255,71,87,0.2);
+  padding:10px 20px; font-size:0.83rem; color:var(--danger);
+}
+.cobros-summary {
+  background:var(--surface2); border-bottom:1px solid var(--border);
+  padding:10px 20px; display:flex; align-items:center; gap:16px; font-size:0.83rem;
+}
+
+/* ── CLIENT CARD ── */
+.client-card {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px;
+  display:flex; align-items:center; gap:14px;
+  cursor:pointer; transition:all var(--transition); margin-bottom:8px;
+}
+.client-card:hover { border-color:var(--accent); transform:translateX(3px); box-shadow:var(--shadow); }
+.client-avatar { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.95rem; flex-shrink:0; }
+.client-info { flex:1; min-width:0; }
+.client-name { font-weight:600; font-size:0.92rem; margin-bottom:2px; }
+.client-phone { font-size:0.78rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.client-stats { text-align:right; flex-shrink:0; }
+.client-total { font-family:var(--font-head); font-weight:700; font-size:0.95rem; color:var(--accent); }
+.client-count { font-size:0.72rem; color:var(--muted); }
+
+/* ── COBRADOR CARDS ── */
+.cobrador-card {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px; margin-bottom:10px;
+  display:flex; align-items:flex-start; gap:14px;
+  transition:all var(--transition);
+}
+.cobrador-card:hover { border-color:var(--accent); }
+.cobrador-num {
+  width:32px; height:32px; border-radius:8px; background:var(--accent);
+  color:#0a0c10; font-weight:800; display:flex; align-items:center;
+  justify-content:center; font-size:0.9rem; flex-shrink:0;
+}
+.cobrador-info { flex:1; }
+.cobrador-name { font-weight:600; margin-bottom:2px; }
+.cobrador-addr, .cobrador-tel { font-size:0.8rem; color:var(--muted); }
+
+/* ── DETAIL PANEL ── */
+.detail-panel {
+  position:fixed; right:0; top:0; bottom:0;
+  width:380px; background:var(--surface); border-left:1px solid var(--border);
+  z-index:150; padding:24px; transform:translateX(100%);
+  transition:transform 0.25s ease; overflow-y:auto;
+}
+.detail-panel.show { transform:translateX(0); box-shadow:-8px 0 40px rgba(0,0,0,0.4); }
+.detail-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.detail-title { font-family:var(--font-head); font-size:1.05rem; font-weight:700; }
+.close-btn { width:30px; height:30px; border-radius:7px; background:var(--surface2); border:1px solid var(--border); cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all var(--transition); font-size:0.9rem; }
+.close-btn:hover { color:var(--text); border-color:var(--text); }
+.detail-big { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px; text-align:center; }
+.detail-big .amount { font-family:var(--font-head); font-size:1.8rem; font-weight:800; color:var(--accent); }
+.detail-big .label { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+.dp-actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px; }
+.dp-actions .btn { justify-content:center; font-size:0.8rem; }
+.detail-info { margin-bottom:16px; }
+.detail-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:0.84rem; }
+.detail-row:last-child { border-bottom:none; }
+.detail-row>span:first-child { color:var(--muted); }
+.detail-row>span:last-child { font-weight:500; }
+.dp-section-title { font-size:0.68rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin:14px 0 8px; }
+.payment-item { background:var(--surface2); border:1px solid var(--border); border-radius:9px; padding:10px 13px; margin-bottom:7px; display:flex; align-items:center; justify-content:space-between; font-size:0.82rem; transition:all var(--transition); }
+.payment-item.paid { border-color:rgba(0,229,160,0.2); }
+.payment-item.overdue { border-color:rgba(255,71,87,0.2); }
+.payment-item:hover { border-color:var(--accent); }
+.p-num { font-size:0.72rem; color:var(--muted); margin-top:2px; }
+.p-amount { font-weight:700; font-family:var(--font-head); }
+
+/* ── MODALS ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px);
+  z-index:200; display:none; align-items:center; justify-content:center; padding:16px;
+}
+.modal-overlay.show { display:flex; }
+.modal {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; padding:28px; width:540px; max-width:100%;
+  max-height:90vh; overflow-y:auto; animation:modalIn 0.2s ease;
+  box-shadow:0 24px 80px rgba(0,0,0,0.6);
+}
+.modal.modal-wide { width:700px; }
+.modal.modal-help { width:660px; }
+@keyframes modalIn { from{transform:scale(0.96);opacity:0} to{transform:scale(1);opacity:1} }
+.modal-title { font-family:var(--font-head); font-size:1.2rem; font-weight:700; margin-bottom:22px; display:flex; align-items:center; gap:10px; }
+.modal-actions { display:flex; gap:8px; margin-top:22px; justify-content:flex-end; }
+
+/* ── FORMS ── */
+.form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-group.full { grid-column:1/-1; }
+.form-group label { font-size:0.74rem; color:var(--muted); }
+.form-group input, .form-group select, .form-group textarea {
+  background:var(--surface2); border:1px solid var(--border); color:var(--text);
+  padding:9px 12px; border-radius:var(--radius-sm);
+  font-family:var(--font-body); font-size:0.88rem; outline:none;
+  transition:border-color var(--transition);
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--accent); }
+.form-group textarea { resize:vertical; min-height:68px; }
+input[type="color"] { padding:4px 8px; cursor:pointer; height:38px; }
+input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
+.form-row { display:flex; align-items:center; gap:10px; }
+
+/* ── PREVIEW BOX ── */
+.preview-box {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:14px; margin-top:14px; display:none;
+}
+.preview-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; text-align:center; }
+.prev-item-label { font-size:0.68rem; color:var(--muted); }
+.prev-item-val { font-family:var(--font-head); font-size:1.05rem; font-weight:700; }
+
+/* ── TABS ── */
+.tabs { display:flex; gap:3px; background:var(--surface2); border-radius:10px; padding:4px; border:1px solid var(--border); }
+.tab { flex:1; padding:7px; text-align:center; cursor:pointer; border-radius:7px; font-size:0.82rem; color:var(--muted); transition:all var(--transition); }
+.tab.active { background:var(--surface); color:var(--text); font-weight:500; box-shadow:0 1px 4px rgba(0,0,0,0.3); }
+.cobros-tabs { max-width:400px; margin-bottom:20px; }
+
+/* ── REPORT GRID ── */
+.report-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.report-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+.report-card h4 { font-family:var(--font-head); font-size:0.82rem; margin-bottom:14px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+.chart-bar-item { display:flex; align-items:center; gap:10px; font-size:0.8rem; margin-bottom:8px; }
+.chart-bar-label { width:90px; color:var(--muted); flex-shrink:0; font-size:0.78rem; }
+.chart-bar-track { flex:1; height:7px; background:var(--surface); border-radius:4px; overflow:hidden; }
+.chart-bar-fill { height:100%; border-radius:4px; transition:width 0.5s; }
+.chart-bar-val { width:70px; text-align:right; font-weight:600; }
+.metrics-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.metric-box { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:12px; }
+.metric-val { font-family:var(--font-head); font-size:1.3rem; font-weight:700; }
+.metric-lbl { font-size:0.7rem; color:var(--muted); margin-top:2px; }
+
+/* ── HELP MODAL ── */
+.help-nav { display:flex; flex-direction:column; gap:2px; border-right:1px solid var(--border); padding-right:16px; min-width:140px; }
+.help-nav-item { padding:8px 12px; border-radius:7px; cursor:pointer; font-size:0.85rem; color:var(--muted); transition:all var(--transition); }
+.help-nav-item.active, .help-nav-item:hover { background:var(--accent-dim); color:var(--accent); }
+.help-content { flex:1; padding-left:20px; max-height:400px; overflow-y:auto; }
+.help-section { display:none; }
+.help-section.active { display:block; }
+.help-section h3 { font-family:var(--font-head); font-size:1rem; font-weight:700; margin-bottom:12px; }
+.help-section p, .help-section li { font-size:0.87rem; color:var(--text2); margin-bottom:8px; line-height:1.6; }
+.help-section ul { padding-left:16px; }
+.help-section .callout { background:var(--accent-dim); border:1px solid var(--accent); border-radius:8px; padding:10px 13px; font-size:0.83rem; color:var(--accent); margin:10px 0; }
+.help-badge { display:inline-block; background:var(--accent); color:#0a0c10; border-radius:5px; padding:1px 7px; font-size:0.72rem; font-weight:700; margin:0 2px; }
+
+/* ── CONFIG TABS ── */
+.config-tabs { display:flex; gap:3px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:0; }
+.config-tab { padding:8px 14px; cursor:pointer; font-size:0.82rem; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; transition:all var(--transition); }
+.config-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.config-panel { display:none; }
+.config-panel.active { display:block; }
+.config-section-title { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin:16px 0 8px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align:center; padding:44px; color:var(--muted); }
+.e-icon { font-size:2.2rem; margin-bottom:10px; opacity:0.4; }
+
+/* ── PIN SCREEN ── */
+.pin-screen {
+  position:fixed; inset:0; background:var(--bg); z-index:1000;
+  display:flex; align-items:center; justify-content:center; flex-direction:column; gap:24px;
+}
+.pin-dots { display:flex; gap:12px; }
+.pin-dot { width:14px; height:14px; border-radius:50%; border:2px solid var(--border); transition:all 0.15s; }
+.pin-dot.filled { background:var(--accent); border-color:var(--accent); }
+.pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.pin-key { width:64px; height:64px; border-radius:50%; background:var(--surface); border:1px solid var(--border); font-size:1.3rem; font-weight:600; cursor:pointer; transition:all 0.15s; font-family:var(--font-head); color:var(--text); }
+.pin-key:hover { background:var(--surface2); border-color:var(--accent); color:var(--accent); }
+.pin-key.del { font-size:1rem; }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:12px 18px;
+  font-size:0.85rem; z-index:9999;
+  transform:translateY(80px); opacity:0;
+  transition:all 0.3s ease;
+  display:flex; align-items:center; gap:9px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5); min-width:220px;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+.toast-icon { font-size:1rem; }
+
+/* ── DOCS MODAL GRID ── */
+.docs-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+.doc-card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center; cursor:pointer; transition:all var(--transition); }
+.doc-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+.doc-card .doc-icon { font-size:2rem; margin-bottom:8px; }
+.doc-card .doc-name { font-weight:600; font-size:0.88rem; margin-bottom:4px; }
+.doc-card .doc-desc { font-size:0.75rem; color:var(--muted); }
+.doc-card .doc-actions { display:flex; gap:6px; margin-top:10px; justify-content:center; }
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════ */
+@media (max-width:1100px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:900px) {
+  :root { --sidebar-w: 60px; }
+  .logo h1, .logo-sub, .nav-item span, .nav-section, .capital-pill { display:none; }
+  .sidebar-actions { flex-direction:column; gap:4px; }
+  .sidebar-actions .sa-label { display:none; }
+  .nav-item { justify-content:center; padding:12px; }
+  .nav-item svg { width:20px; height:20px; margin:0; }
+  .main { padding:16px; }
+  .kpi-grid { grid-template-columns:repeat(2,1fr); }
+  .detail-panel { width:100%; }
+  .report-grid { grid-template-columns:1fr; }
+}
+@media (max-width:600px) {
+  .form-grid { grid-template-columns:1fr; }
+  .dp-actions { grid-template-columns:1fr; }
+  .kpi-val { font-size:1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════
+  PIN SCREEN
+══════════════════════════════════════════════════ -->
+<div class="pin-screen" id="pin-screen" style="display:none">
+  <div style="font-family:var(--font-head);font-size:1.5rem;font-weight:800">🔐 PrestamoControl</div>
+  <div style="color:var(--muted);font-size:0.88rem">Ingresa tu PIN para continuar</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="pd-0"></div><div class="pin-dot" id="pd-1"></div>
+    <div class="pin-dot" id="pd-2"></div><div class="pin-dot" id="pd-3"></div>
+  </div>
+  <div class="pin-keypad">
+    <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+    <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+    <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+    <div></div><button class="pin-key" onclick="pinKey('0')">0</button><button class="pin-key del" onclick="pinDel()">⌫</button>
+  </div>
+  <div id="pin-error" style="color:var(--danger);font-size:0.85rem;min-height:20px"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+  SIDEBAR
+══════════════════════════════════════════════════ -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <div class="logo-icon">💰</div>
+      <h1>Prestamo<span>Control</span></h1>
+    </div>
+    <div class="logo-sub"><span id="sb-nombre">PrestamoControl</span></div>
+  </div>
+
+  <span class="nav-section">Principal</span>
+  <div class="nav-item active" data-view="dashboard" onclick="UI.showView('dashboard')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    <span>Dashboard</span>
+  </div>
+  <div class="nav-item" data-view="prestamos" onclick="UI.showView('prestamos')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+    <span>Préstamos</span>
+  </div>
+  <div class="nav-item" data-view="clientes" onclick="UI.showView('clientes')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    <span>Clientes</span>
+  </div>
+  <div class="nav-item" data-view="cobros" onclick="UI.showView('cobros')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    <span>Cobros</span>
+    <span class="nav-badge" id="badge-cobros">0</span>
+  </div>
+  <div class="nav-item" data-view="cobrador" onclick="UI.showView('cobrador')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    <span>Ruta Cobrador</span>
+  </div>
+
+  <span class="nav-section">Análisis</span>
+  <div class="nav-item" data-view="reportes" onclick="UI.showView('reportes')">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    <span>Reportes</span>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="capital-pill">
+      <div class="cp-label">Por cobrar</div>
+      <div class="cp-val" id="sb-capital">$0</div>
+    </div>
+    <div class="sidebar-actions">
+      <button class="sa-btn sa-config" onclick="MODAL.abrirConfig()" title="Configuración">
+        <span class="sa-icon">⚙️</span>
+        <span class="sa-label">Configuración</span>
+      </button>
+      <button class="sa-btn" onclick="MODAL.abrirAyuda()" title="Ayuda &amp; Guía">
+        <span class="sa-icon">❓</span>
+        <span class="sa-label">Ayuda &amp; Guía</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════
+  MAIN CONTENT
+══════════════════════════════════════════════════ -->
+<main class="main">
+
+<!-- ── DASHBOARD ── -->
+<div class="view active" id="view-dashboard">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>Dashboard</h2>
+      <div class="topbar-sub" id="fecha-hoy"></div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="MODAL.abrirNuevoCliente()">👤 Nuevo Cliente</button>
+      <button class="btn btn-primary" onclick="MODAL.abrirNuevoPrestamo()">💰 Nuevo Préstamo</button>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card" id="kpi-capital" style="--c:var(--accent)">
+      <div class="kpi-label">Por Cobrar</div>
+      <div class="kpi-val">$0</div>
+      <div class="kpi-sub">—</div>
+      <div class="kpi-icon">💰</div>
+    </div>
+    <div class="kpi-card" id="kpi-cobrado" style="--c:var(--accent3)">
+      <div class="kpi-label">Total Cobrado</div>
+      <div class="kpi-val">$0</div>
+      <div class="kpi-sub">—</div>
+      <div class="kpi-icon">📈</div>
+    </div>
+    <div class="kpi-card" id="kpi-vencidos" style="--c:var(--danger)">
+      <div class="kpi-label">Vencidos</div>
+      <div class="kpi-val">0</div>
+      <div class="kpi-sub">—</div>
+      <div class="kpi-icon">⚠️</div>
+    </div>
+    <div class="kpi-card" id="kpi-clientes" style="--c:var(--accent2)">
+      <div class="kpi-label">Clientes</div>
+      <div class="kpi-val">0</div>
+      <div class="kpi-sub">—</div>
+      <div class="kpi-icon">👥</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h3>⚡ Cobros de Hoy</h3>
+      <span style="font-size:0.82rem;color:var(--muted)" id="cobros-hoy-sum"></span>
+    </div>
+    <div id="cobros-hoy-lista"><div class="empty-state"><div class="e-icon">✅</div><p>Sin cobros hoy</p></div></div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <h3>🔴 Cuotas Vencidas</h3>
+    </div>
+    <div id="vencidos-lista"></div>
+  </div>
+</div>
+
+<!-- ── PRÉSTAMOS ── -->
+<div class="view" id="view-prestamos">
+  <div class="topbar">
+    <div class="topbar-left"><h2>Préstamos</h2></div>
+    <div class="topbar-right">
+      <div class="filters">
+        <div class="search-box">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+          <input type="text" id="search-prestamo" placeholder="Buscar cliente..." oninput="UI.renderPrestamos()">
+        </div>
+        <select class="filter-sel" id="filter-estado" onchange="UI.renderPrestamos()">
+          <option value="">Todos</option>
+          <option value="activo">Activos</option>
+          <option value="vencido">Vencidos</option>
+          <option value="pagado">Pagados</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="MODAL.abrirNuevoPrestamo()">+ Nuevo</button>
+    </div>
+  </div>
+  <div class="section">
+    <table>
+      <thead><tr>
+        <th>Cliente</th><th>Capital</th><th>Tasa</th><th>Total</th>
+        <th>Frecuencia</th><th>Avance</th><th>Próx. cobro</th>
+        <th>Estado</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="tbody-prestamos"></tbody>
+    </table>
+    <div id="prestamos-empty" class="empty-state" style="display:none"><div class="e-icon">💸</div><p>Sin préstamos registrados</p></div>
+  </div>
+</div>
+
+<!-- ── CLIENTES ── -->
+<div class="view" id="view-clientes">
+  <div class="topbar">
+    <div class="topbar-left"><h2>Clientes</h2></div>
+    <div class="topbar-right">
+      <div class="search-box">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+        <input type="text" id="search-cliente" placeholder="Buscar cliente..." oninput="UI.renderClientes()">
+      </div>
+      <button class="btn btn-primary" onclick="MODAL.abrirNuevoCliente()">👤 Nuevo Cliente</button>
+    </div>
+  </div>
+  <div id="lista-clientes"></div>
+  <div id="clientes-empty" class="empty-state" style="display:none"><div class="e-icon">👥</div><p>Sin clientes registrados</p></div>
+</div>
+
+<!-- ── COBROS ── -->
+<div class="view" id="view-cobros">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>Cobros</h2>
+      <div class="topbar-sub" id="fecha-cobros"></div>
+    </div>
+  </div>
+  <div class="cobros-tabs tabs">
+    <div class="tab active" onclick="UI.setCobrosFilter('pendientes',this)">Pendientes</div>
+    <div class="tab" onclick="UI.setCobrosFilter('hoy',this)">Hoy</div>
+    <div class="tab" onclick="UI.setCobrosFilter('semana',this)">Esta semana</div>
+    <div class="tab" onclick="UI.setCobrosFilter('atrasados',this)">Atrasados</div>
+  </div>
+  <div class="section"><div id="cobros-dia-tabla"></div></div>
+</div>
+
+<!-- ── COBRADOR ── -->
+<div class="view" id="view-cobrador">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h2>🗺️ Ruta del Cobrador</h2>
+      <div class="topbar-sub">Vista simplificada para cobros del día</div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="UI.pdfCobros()">📄 Imprimir Ruta</button>
+      <button class="btn btn-ghost" onclick="PCXLSX.exportarCobrosHoy()">📊 Excel</button>
+    </div>
+  </div>
+  <div id="cobrador-lista"></div>
+</div>
+
+<!-- ── REPORTES ── -->
+<div class="view" id="view-reportes">
+  <div class="topbar">
+    <div class="topbar-left"><h2>Reportes</h2></div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="PCXLSX.exportarBackupCompleto()">📊 Exportar Excel</button>
+      <button class="btn btn-ghost" onclick="PC.exportBackupJSON()">💾 Backup JSON</button>
+    </div>
+  </div>
+  <div id="reporte-content"></div>
+</div>
+
+</main><!-- /main -->
+
+<!-- ══════════════════════════════════════════════════
+  DETAIL PANEL
+══════════════════════════════════════════════════ -->
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-header">
+    <span class="detail-title" id="dp-title">Detalle</span>
+    <div class="close-btn" onclick="UI.closeDetail()">✕</div>
+  </div>
+  <div id="dp-content"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+  MODALS
+══════════════════════════════════════════════════ -->
+
+<!-- Nuevo Cliente -->
+<div class="modal-overlay" id="modal-nuevo-cliente">
+  <div class="modal">
+    <div class="modal-title">👤 Nuevo Cliente</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Nombre completo *</label><input type="text" id="c-nombre" placeholder="Juan Pérez López"></div>
+      <div class="form-group"><label>Teléfono principal</label><input type="tel" id="c-tel" placeholder="+52 444 000 0000"></div>
+      <div class="form-group"><label>Teléfono 2 / WhatsApp</label><input type="tel" id="c-tel2" placeholder="+52 444 000 0001"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="c-email" placeholder="correo@email.com"></div>
+      <div class="form-group full"><label>Dirección completa</label><input type="text" id="c-dir" placeholder="Calle, número, colonia, ciudad"></div>
+      <div class="form-group"><label>Referencia / Aval</label><input type="text" id="c-ref" placeholder="Nombre del aval"></div>
+      <div class="form-group"><label>Ocupación</label><input type="text" id="c-ocup" placeholder="Comerciante, empleado..."></div>
+      <div class="form-group full"><label>Notas</label><textarea id="c-notas" placeholder="Observaciones, garantías, etc."></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="MODAL.close('modal-nuevo-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="MODAL.guardarCliente()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Nuevo Préstamo -->
+<div class="modal-overlay" id="modal-nuevo-prestamo">
+  <div class="modal modal-wide">
+    <div class="modal-title">💰 Nuevo Préstamo</div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Cliente *</label>
+        <select id="f-cliente"><option value="">— Seleccionar cliente —</option></select>
+      </div>
+      <div class="form-group"><label>Monto del préstamo ($) *</label><input type="number" id="f-monto" placeholder="5000" oninput="MODAL.calcPreview()"></div>
+      <div class="form-group"><label>Tasa de interés (%)</label><input type="number" id="f-tasa" placeholder="10" oninput="MODAL.calcPreview()"></div>
+      <div class="form-group"><label>Número de cuotas</label><input type="number" id="f-cuotas" placeholder="12" oninput="MODAL.calcPreview()"></div>
+      <div class="form-group"><label>Frecuencia de pago</label>
+        <select id="f-frecuencia" onchange="MODAL.calcPreview()">
+          <option value="semanal">Semanal (cada 7 días)</option>
+          <option value="quincenal">Quincenal (cada 15 días)</option>
+          <option value="mensual" selected>Mensual</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Tipo de interés</label>
+        <select id="f-tipo-interes" onchange="MODAL.calcPreview()">
+          <option value="flat">Flat — % sobre capital total</option>
+          <option value="cuota">Por cuota — % × número de cuotas</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Fecha de inicio *</label><input type="date" id="f-fecha"></div>
+      <div class="form-group full"><label>Notas / Garantía</label><input type="text" id="f-notas" placeholder="Garantía, descripción del préstamo..."></div>
+    </div>
+    <div class="preview-box" id="prestamo-preview">
+      <div class="preview-grid">
+        <div><div class="prev-item-label">Total a pagar</div><div class="prev-item-val" style="color:var(--accent)" id="prev-total">—</div></div>
+        <div><div class="prev-item-label">Cuota</div><div class="prev-item-val" style="color:var(--accent2)" id="prev-cuota">—</div></div>
+        <div><div class="prev-item-label">Interés total</div><div class="prev-item-val" style="color:var(--accent3)" id="prev-interes">—</div></div>
+        <div><div class="prev-item-label">Tasa efectiva</div><div class="prev-item-val" style="color:var(--warn)" id="prev-roi">—</div></div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="MODAL.close('modal-nuevo-prestamo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="MODAL.guardarPrestamo()">💾 Guardar Préstamo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Abono -->
+<div class="modal-overlay" id="modal-abono">
+  <div class="modal">
+    <div class="modal-title">💵 Registrar Cobro</div>
+    <div id="abono-info"></div>
+    <div class="form-grid">
+      <div class="form-group"><label>Monto cobrado ($)</label><input type="number" id="abono-monto" placeholder="0.00"></div>
+      <div class="form-group"><label>Fecha del cobro</label><input type="date" id="abono-fecha"></div>
+      <div class="form-group full"><label>Nota del pago</label><input type="text" id="abono-nota" placeholder="Observación del pago..."></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="MODAL.close('modal-abono')">Cancelar</button>
+      <button class="btn btn-primary" onclick="MODAL.registrarAbono()">✅ Registrar Pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- Documentos Préstamo -->
+<div class="modal-overlay" id="modal-docs">
+  <div class="modal modal-wide">
+    <div class="modal-title">📄 Documentos del Préstamo</div>
+    <div id="docs-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px;margin-bottom:16px;font-size:0.88rem"></div>
+    <div class="docs-grid">
+      <div class="doc-card" onclick="MODAL.generarDoc('pagare')">
+        <div class="doc-icon">📝</div>
+        <div class="doc-name">Pagaré</div>
+        <div class="doc-desc">Documento legal con tabla de amortización y firmas</div>
+        <div class="doc-actions">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();MODAL.generarDoc('pagare')">👁️ Ver</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();MODAL.descargarDoc('pagare')">⬇️ PDF</button>
+        </div>
+      </div>
+      <div class="doc-card" onclick="MODAL.generarDoc('contrato')">
+        <div class="doc-icon">📜</div>
+        <div class="doc-name">Contrato</div>
+        <div class="doc-desc">Contrato formal con cláusulas, mora y jurisdicción</div>
+        <div class="doc-actions">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();MODAL.generarDoc('contrato')">👁️ Ver</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();MODAL.descargarDoc('contrato')">⬇️ PDF</button>
+        </div>
+      </div>
+      <div class="doc-card" onclick="MODAL.generarDoc('comprobante')">
+        <div class="doc-icon">🧾</div>
+        <div class="doc-name">Comprobante de Pago</div>
+        <div class="doc-desc">Recibo del último pago registrado</div>
+        <div class="doc-actions">
+          <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();MODAL.generarDoc('comprobante')">👁️ Ver</button>
+        </div>
+      </div>
+      <div class="doc-card">
+        <div class="doc-icon">📊</div>
+        <div class="doc-name">Tabla de Amortización</div>
+        <div class="doc-desc">Incluida en el pagaré y contrato</div>
+        <div class="doc-actions">
+          <button class="btn btn-ghost btn-sm" onclick="MODAL.generarDoc('pagare')">Ver en Pagaré</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="MODAL.close('modal-docs')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Configuración -->
+<div class="modal-overlay" id="modal-config">
+  <div class="modal modal-wide" style="width:680px">
+    <div class="modal-title">⚙️ Configuración — PrestamoControl</div>
+    <div class="config-tabs">
+      <div class="config-tab active" onclick="switchConfigTab('negocio',this)">🏢 Negocio</div>
+      <div class="config-tab" onclick="switchConfigTab('financiero',this)">💰 Financiero</div>
+      <div class="config-tab" onclick="switchConfigTab('apariencia',this)">🎨 Apariencia</div>
+      <div class="config-tab" onclick="switchConfigTab('seguridad',this)">🔐 Seguridad</div>
+      <div class="config-tab" onclick="switchConfigTab('backup',this)">💾 Backup</div>
+      <div class="config-tab" onclick="switchConfigTab('notif',this)">🔔 Avisos</div>
+    </div>
+
+    <!-- ── NEGOCIO ── -->
+    <div class="config-panel active" id="cfgp-negocio">
+      <div class="config-section-title">Datos del Prestamista (aparecen en PDFs y documentos)</div>
+      <div class="form-grid">
+        <div class="form-group full"><label>Nombre / Razón social *</label><input type="text" id="cfg-nombre" placeholder="Ej: Juan López Préstamos"></div>
+        <div class="form-group"><label>RFC (opcional)</label><input type="text" id="cfg-rfc" placeholder="LOPL800101XXX"></div>
+        <div class="form-group"><label>Teléfono / WhatsApp</label><input type="tel" id="cfg-tel" placeholder="+52 444 000 0000"></div>
+        <div class="form-group full"><label>Dirección / Ciudad</label><input type="text" id="cfg-dir" placeholder="Ej: San Luis Potosí, SLP"></div>
+        <div class="form-group full"><label>Email de contacto</label><input type="email" id="cfg-email" placeholder="contacto@email.com"></div>
+      </div>
+      <div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:9px;padding:11px 14px;margin-top:14px;font-size:0.82rem;color:var(--accent)">
+        💡 Estos datos aparecen automáticamente en los Pagarés, Contratos y Comprobantes de pago generados.
+      </div>
+    </div>
+
+    <!-- ── FINANCIERO ── -->
+    <div class="config-panel" id="cfgp-financiero">
+      <div class="config-section-title">Valores por Defecto al Crear un Préstamo</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Tasa de interés defecto (%)</label>
+          <input type="number" id="cfg-tasa" min="0" max="100" step="0.5">
+          <span style="font-size:0.72rem;color:var(--muted);margin-top:2px">Pre-llena el campo al crear préstamo</span>
+        </div>
+        <div class="form-group">
+          <label>Número de cuotas defecto</label>
+          <input type="number" id="cfg-cuotas" min="1" max="120">
+        </div>
+        <div class="form-group">
+          <label>Frecuencia de pago defecto</label>
+          <select id="cfg-frecuencia-def">
+            <option value="semanal">Semanal</option>
+            <option value="quincenal">Quincenal</option>
+            <option value="mensual">Mensual</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipo de interés defecto</label>
+          <select id="cfg-tipo-interes-def">
+            <option value="flat">Flat (% sobre capital)</option>
+            <option value="cuota">Por cuota (% × cuotas)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Mora por pago atrasado (%)</label>
+          <input type="number" id="cfg-mora" min="0" max="50" step="0.5">
+          <span style="font-size:0.72rem;color:var(--muted);margin-top:2px">Se aplica en contratos</span>
+        </div>
+        <div class="form-group">
+          <label>Días de gracia</label>
+          <input type="number" id="cfg-dias-gracia" min="0" max="30">
+          <span style="font-size:0.72rem;color:var(--muted);margin-top:2px">Días antes de marcar como vencido</span>
+        </div>
+      </div>
+      <div class="config-section-title" style="margin-top:16px">Tasas Rápidas (acceso directo al crear préstamo)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px" id="tasas-rapidas-list"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input type="number" id="nueva-tasa-rapida" placeholder="Ej: 15" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:var(--radius-sm);font-size:0.85rem;width:100px;outline:none">
+        <button class="btn btn-ghost btn-sm" onclick="agregarTasaRapida()">+ Agregar tasa</button>
+      </div>
+    </div>
+
+    <!-- ── APARIENCIA ── -->
+    <div class="config-panel" id="cfgp-apariencia">
+      <div class="config-section-title">Tema Visual</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+        <div class="theme-option" id="theme-dark" onclick="previewTheme('dark')" style="background:#0a0c10;border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;text-align:center;transition:all 0.15s">
+          <div style="font-size:1.4rem">🌑</div>
+          <div style="color:#e8ecf4;font-size:0.85rem;font-weight:600;margin-top:6px">Oscuro</div>
+          <div style="color:#5e6a84;font-size:0.72rem">Dark mode</div>
+        </div>
+        <div class="theme-option" id="theme-light" onclick="previewTheme('light')" style="background:#f0f2f8;border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;text-align:center;transition:all 0.15s">
+          <div style="font-size:1.4rem">☀️</div>
+          <div style="color:#0d1120;font-size:0.85rem;font-weight:600;margin-top:6px">Claro</div>
+          <div style="color:#8892ab;font-size:0.72rem">Light mode</div>
+        </div>
+        <div class="theme-option" id="theme-high-contrast" onclick="previewTheme('high-contrast')" style="background:#000;border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;text-align:center;transition:all 0.15s">
+          <div style="font-size:1.4rem">⬛</div>
+          <div style="color:#fff;font-size:0.85rem;font-weight:600;margin-top:6px">Alto Contraste</div>
+          <div style="color:#aaa;font-size:0.72rem">Para visión limitada</div>
+        </div>
+      </div>
+      <input type="hidden" id="cfg-tema" value="dark">
+
+      <div class="config-section-title">Tamaño de Letra ♿</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+        <div class="font-option" data-size="small" onclick="previewFont('small',this)" style="border:2px solid var(--border);border-radius:9px;padding:12px;cursor:pointer;text-align:center;transition:all 0.15s">
+          <div style="font-size:11px;font-weight:600">Aa</div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Pequeño<br>13px</div>
+        </div>
+        <div class="font-option" data-size="normal" onclick="previewFont('normal',this)" style="border:2px solid var(--border);border-radius:9px;padding:12px;cursor:pointer;text-align:center;transition:all 0.15s">
+          <div style="font-size:14px;font-weight:600">Aa</div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Normal<br>15px</div>
+        </div>
+        <div class="font-option" data-size="large" onclick="previewFont('large',this)" style="border:2px solid var(--border);border-radius:9px;padding:12px;cursor:pointer;text-align:center;transition:all 0.15s">
+          <div style="font-size:17px;font-weight:600">Aa</div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Grande ♿<br>17px</div>
+        </div>
+        <div class="font-option" data-size="xlarge" onclick="previewFont('xlarge',this)" style="border:2px solid var(--border);border-radius:9px;padding:12px;cursor:pointer;text-align:center;transition:all 0.15s">
+          <div style="font-size:20px;font-weight:600">Aa</div>
+          <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Muy Grande ♿<br>20px</div>
+        </div>
+      </div>
+      <input type="hidden" id="cfg-fuente" value="normal">
+
+      <div class="config-section-title">Color de Acento</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px" id="color-presets">
+        <div class="color-preset" data-color="#00e5a0" onclick="previewColor('#00e5a0',this)" style="width:32px;height:32px;border-radius:8px;background:#00e5a0;cursor:pointer;border:2px solid transparent;transition:all 0.15s" title="Verde menta"></div>
+        <div class="color-preset" data-color="#ff6b35" onclick="previewColor('#ff6b35',this)" style="width:32px;height:32px;border-radius:8px;background:#ff6b35;cursor:pointer;border:2px solid transparent;transition:all 0.15s" title="Naranja"></div>
+        <div class="color-preset" data-color="#7c6dfa" onclick="previewColor('#7c6dfa',this)" style="width:32px;height:32px;border-radius:8px;background:#7c6dfa;cursor:pointer;border:2px solid transparent;transition:all 0.15s" title="Morado"></div>
+        <div class="color-preset" data-color="#1e90ff" onclick="previewColor('#1e90ff',this)" style="width:32px;height:32px;border-radius:8px;background:#1e90ff;cursor:pointer;border:2px solid transparent;transition:all 0.15s" title="Azul"></div>
+        <div class="color-preset" data-color="#ffa502" onclick="previewColor('#ffa502',this)" style="width:32px;height:32px;border-radius:8px;background:#ffa502;cursor:pointer;border:2px solid transparent;transition:all 0.15s" title="Amarillo"></div>
+        <div class="color-preset" data-color="#ff4757" onclick="previewColor('#ff4757',this)" style="width:32px;height:32px;border-radius:8px;background:#ff4757;cursor:pointer;border:2px solid transparent;transition:all 0.15s" title="Rojo"></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:4px">
+          <input type="color" id="cfg-acento" value="#00e5a0" oninput="previewColor(this.value,null)" style="width:32px;height:32px;padding:2px;border-radius:8px;border:1px solid var(--border);cursor:pointer;background:var(--surface2)">
+          <span style="font-size:0.78rem;color:var(--muted)">Personalizado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SEGURIDAD ── -->
+    <div class="config-panel" id="cfgp-seguridad">
+      <div style="background:rgba(255,165,2,0.08);border:1px solid rgba(255,165,2,0.3);border-radius:9px;padding:12px 14px;margin-bottom:16px;font-size:0.83rem;color:var(--warn)">
+        ⚠️ El PIN protege la pantalla de acceso visual a la app. Los datos se almacenan en tu navegador. No es cifrado de datos completo.
+      </div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.9rem">
+            <input type="checkbox" id="cfg-pin-enabled" style="width:18px;height:18px;accent-color:var(--accent)">
+            <span>Activar PIN de acceso a la app</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label>Nuevo PIN (4–8 dígitos)</label>
+          <input type="password" id="cfg-pin-new" placeholder="Ej: 1234" maxlength="8" inputmode="numeric">
+          <span style="font-size:0.72rem;color:var(--muted);margin-top:2px">Déjalo vacío para no cambiar el PIN actual</span>
+        </div>
+        <div class="form-group">
+          <label>Confirmar PIN</label>
+          <input type="password" id="cfg-pin-confirm" placeholder="Repite el PIN" maxlength="8" inputmode="numeric">
+        </div>
+        <div class="form-group">
+          <label>Tiempo de sesión (minutos)</label>
+          <input type="number" id="cfg-pin-timeout" min="5" max="480" step="5">
+          <span style="font-size:0.72rem;color:var(--muted);margin-top:2px">La app se bloquea tras este tiempo sin uso</span>
+        </div>
+        <div class="form-group">
+          <label>Vista del cobrador</label>
+          <input type="password" id="cfg-cobrador-pin" placeholder="PIN para cobrador (opcional)" maxlength="8" inputmode="numeric">
+          <span style="font-size:0.72rem;color:var(--muted);margin-top:2px">PIN diferente para acceso solo-cobros</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BACKUP ── -->
+    <div class="config-panel" id="cfgp-backup">
+      <div class="config-section-title">Respaldo Automático</div>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:0.9rem">
+            <input type="checkbox" id="cfg-backup-auto" style="width:18px;height:18px;accent-color:var(--accent)">
+            <span>Activar backup automático</span>
+          </label>
+        </div>
+        <div class="form-group full">
+          <label>Frecuencia de respaldo</label>
+          <select id="cfg-backup-freq">
+            <option value="cada-operacion">🔄 Cada operación (más seguro)</option>
+            <option value="diario">📅 Diario (al abrir la app)</option>
+            <option value="semanal">📆 Semanal</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:9px;padding:11px 14px;margin:12px 0;font-size:0.82rem;color:var(--text2)">
+        💾 <b>Último backup:</b> <span id="ultimo-backup-fecha">Nunca</span>
+      </div>
+
+      <div class="config-section-title">Exportar Ahora</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:1.8rem;margin-bottom:6px">📊</div>
+          <div style="font-weight:600;font-size:0.9rem;margin-bottom:4px">Excel Completo</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:10px">5 hojas: Clientes, Préstamos,<br>Cuotas, Resumen, Cobros</div>
+          <button class="btn btn-primary btn-sm" style="width:100%" onclick="PCXLSX.exportarBackupCompleto()">⬇️ Descargar .xlsx</button>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center">
+          <div style="font-size:1.8rem;margin-bottom:6px">💾</div>
+          <div style="font-weight:600;font-size:0.9rem;margin-bottom:4px">Backup JSON</div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:10px">Restaurable, contiene<br>todos los datos</div>
+          <button class="btn btn-ghost btn-sm" style="width:100%" onclick="PC.exportBackupJSON()">⬇️ Descargar .json</button>
+        </div>
+      </div>
+
+      <div class="config-section-title" style="margin-top:16px">App Móvil (PWA)</div>
+      <div style="background:var(--accent-dim);border:1px solid var(--accent);border-radius:9px;padding:12px 14px;margin-bottom:10px;font-size:0.83rem">
+        <div style="font-weight:600;color:var(--accent);margin-bottom:4px">📱 Instalar en Android / iOS</div>
+        <div style="color:var(--text2)">Esta app funciona como aplicación nativa. En Chrome Android: menú ⋮ → "Agregar a pantalla de inicio". En Safari iOS: botón compartir → "Agregar a inicio".</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="btn btn-primary btn-sm" id="cfg-install-btn" onclick="triggerInstall()">📲 Instalar App</button>
+        <button class="btn btn-ghost btn-sm" onclick="checkPWAStatus()">🔍 Estado PWA</button>
+      </div>
+      <div class="config-section-title" style="margin-top:0">Restaurar desde Backup</div>
+      <div style="background:rgba(255,71,87,0.06);border:1px solid rgba(255,71,87,0.2);border-radius:9px;padding:11px 14px;margin-bottom:10px;font-size:0.82rem;color:var(--danger)">
+        ⚠️ Restaurar reemplaza <b>todos</b> los datos actuales. Haz un backup primero.
+      </div>
+      <div class="form-group">
+        <label>Archivo JSON de backup</label>
+        <input type="file" id="import-file" accept=".json" style="color:var(--text);background:var(--surface2);border:1px solid var(--border);padding:8px;border-radius:var(--radius-sm);width:100%">
+      </div>
+      <button class="btn btn-danger" style="margin-top:8px" onclick="MODAL.importarBackup()">📥 Restaurar desde archivo</button>
+    </div>
+
+    <!-- ── NOTIFICACIONES ── -->
+    <div class="config-panel" id="cfgp-notif">
+      <div class="config-section-title">Recordatorios de Pago</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Días de anticipación para recordar</label>
+          <input type="number" id="cfg-recordatorio-dias" min="1" max="7">
+          <span style="font-size:0.72rem;color:var(--muted);margin-top:2px">Ej: 1 = avisa 1 día antes del vencimiento</span>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-ghost" onclick="PC.scheduleReminders()">🔔 Activar notificaciones del navegador</button>
+      </div>
+
+      <div class="config-section-title" style="margin-top:16px">Mensajes de WhatsApp Predefinidos</div>
+      <div style="font-size:0.83rem;color:var(--text2);margin-bottom:10px">
+        Estos mensajes se envían con un toque desde la vista de Cobros y Clientes.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px">
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">💬 RECORDATORIO DE PAGO</div>
+          <div style="font-size:0.82rem;color:var(--text2)">Hola [Nombre] 👋 — Te recordamos tu próximo pago de [Monto] con fecha [Fecha]. — [Tu nombre]</div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px">
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">⚠️ PAGO ATRASADO</div>
+          <div style="font-size:0.82rem;color:var(--text2)">Hola [Nombre] — Tu pago está atrasado [X] días. Monto: [Monto] (venció [Fecha]). Por favor regulariza. — [Tu nombre]</div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:12px">
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px">✅ CONFIRMACIÓN DE PAGO</div>
+          <div style="font-size:0.82rem;color:var(--text2)">Hola [Nombre] ✅ — Hemos recibido tu pago de [Monto]. ¡Gracias por tu puntualidad! — [Tu nombre]</div>
+        </div>
+      </div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:10px">
+        Los corchetes [XX] se reemplazan automáticamente con los datos reales del préstamo.
+      </div>
+    </div>
+
+    <div class="modal-actions" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px">
+      <button class="btn btn-ghost" onclick="MODAL.close('modal-config')">Cancelar</button>
+      <button class="btn btn-primary" onclick="MODAL.guardarConfig()">💾 Guardar Configuración</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ayuda -->
+<div class="modal-overlay" id="modal-ayuda">
+  <div class="modal modal-help">
+    <div class="modal-title">❓ Guía de Uso — PrestamoControl</div>
+    <div style="display:flex;gap:0">
+      <div class="help-nav">
+        <div class="help-nav-item active" onclick="showHelp('inicio',this)">🚀 Inicio</div>
+        <div class="help-nav-item" onclick="showHelp('prestamos',this)">💰 Préstamos</div>
+        <div class="help-nav-item" onclick="showHelp('intereses',this)">📊 Intereses</div>
+        <div class="help-nav-item" onclick="showHelp('clientes',this)">👥 Clientes</div>
+        <div class="help-nav-item" onclick="showHelp('cobros',this)">📅 Cobros</div>
+        <div class="help-nav-item" onclick="showHelp('docs',this)">📄 Documentos</div>
+        <div class="help-nav-item" onclick="showHelp('whatsapp',this)">💬 WhatsApp</div>
+        <div class="help-nav-item" onclick="showHelp('backup',this)">💾 Backup</div>
+        <div class="help-nav-item" onclick="showHelp('cobrador',this)">🗺️ Cobrador</div>
+      </div>
+      <div class="help-content">
+        <div class="help-section active" id="help-inicio">
+          <h3>🚀 Bienvenido a PrestamoControl</h3>
+          <p>PrestamoControl es un sistema de gestión de préstamos personales informal. Funciona completamente en tu navegador — tus datos <b>nunca salen de tu dispositivo</b>.</p>
+          <div class="callout">💡 Primero: Ve a <b>⚙️ Config → Negocio</b> y configura tu nombre, teléfono y datos para que aparezcan en los documentos PDF.</div>
+          <p><b>Flujo básico:</b></p>
+          <ul>
+            <li>1. Registra un <b>cliente</b> con sus datos de contacto</li>
+            <li>2. Crea un <b>préstamo</b> para ese cliente</li>
+            <li>3. Revisa <b>Cobros</b> cada día para ver quién debe pagar</li>
+            <li>4. Registra los <b>pagos</b> cuando cobres</li>
+            <li>5. Genera <b>PDFs</b> de comprobantes y contratos</li>
+          </ul>
+        </div>
+        <div class="help-section" id="help-prestamos">
+          <h3>💰 Cómo crear un Préstamo</h3>
+          <p>Haz clic en <span class="help-badge">+ Nuevo Préstamo</span> y completa:</p>
+          <ul>
+            <li><b>Monto:</b> Cuánto dinero entregas al cliente</li>
+            <li><b>Tasa de interés:</b> El porcentaje que cobras</li>
+            <li><b>Número de cuotas:</b> En cuántos pagos se divide</li>
+            <li><b>Frecuencia:</b> Cada cuánto tiempo cobra (semanal/quincenal/mensual)</li>
+            <li><b>Tipo de interés:</b> Ver sección "Intereses"</li>
+          </ul>
+          <p>Al capturar el monto verás automáticamente el cálculo del total, cuota y ganancia.</p>
+        </div>
+        <div class="help-section" id="help-intereses">
+          <h3>📊 Tipos de Interés</h3>
+          <p><b>Flat (sobre capital total):</b></p>
+          <p>El interés se calcula una sola vez sobre el monto original. Ej: $5,000 al 10% flat = $500 de interés. Total = $5,500. Cuota mensual en 6 pagos = $916.67</p>
+          <div class="callout">✅ El más común en préstamos informales. Simple de entender para el cliente.</div>
+          <p><b>Por cuota (interés × número de cuotas):</b></p>
+          <p>El interés se multiplica por el número de cuotas. Ej: $5,000 al 5% × 6 cuotas = 30% total = $1,500. Cuota = $1,083.33</p>
+          <div class="callout">⚠️ Resulta en tasas efectivas más altas. Útil para préstamos cortos.</div>
+        </div>
+        <div class="help-section" id="help-clientes">
+          <h3>👥 Gestión de Clientes</h3>
+          <p>Cada cliente tiene un <b>Score Crediticio</b> calculado automáticamente basado en:</p>
+          <ul>
+            <li>% de pagos realizados puntualmente</li>
+            <li>Número de préstamos completados</li>
+            <li>Días promedio de tardanza</li>
+          </ul>
+          <p><b>Niveles:</b> Excelente (85+) · Bueno (70+) · Regular (50+) · Riesgo (-50)</p>
+          <p>Con base en el score, el sistema recomienda el monto máximo para un nuevo préstamo.</p>
+        </div>
+        <div class="help-section" id="help-cobros">
+          <h3>📅 Vista de Cobros</h3>
+          <p>La sección <b>Cobros</b> muestra todas las cuotas pendientes filtradas por:</p>
+          <ul>
+            <li><b>Pendientes:</b> Todo lo que hay que cobrar esta semana</li>
+            <li><b>Hoy:</b> Solo los que vencen hoy</li>
+            <li><b>Esta semana:</b> Próximos 7 días</li>
+            <li><b>Atrasados:</b> Ya vencieron y no se han cobrado</li>
+          </ul>
+          <p>Desde aquí puedes cobrar directamente o enviar mensaje de WhatsApp con un clic.</p>
+        </div>
+        <div class="help-section" id="help-docs">
+          <h3>📄 Documentos</h3>
+          <p>Desde cada préstamo (botón 📄) puedes generar:</p>
+          <ul>
+            <li><b>Pagaré:</b> Documento legal con tabla de amortización completa</li>
+            <li><b>Contrato:</b> Contrato formal con cláusulas de mora y jurisdicción</li>
+            <li><b>Comprobante:</b> Recibo del último pago registrado</li>
+          </ul>
+          <div class="callout">💡 Configura tu nombre y datos en ⚙️ Config → Negocio para que aparezcan en los documentos.</div>
+        </div>
+        <div class="help-section" id="help-whatsapp">
+          <h3>💬 Mensajes de WhatsApp</h3>
+          <p>PrestamoControl genera mensajes prediseñados para diferentes situaciones:</p>
+          <ul>
+            <li>💬 <b>Recordatorio:</b> Aviso de pago próximo con monto y fecha</li>
+            <li>⚠️ <b>Atrasado:</b> Mensaje de cobro con días de retraso</li>
+            <li>✅ <b>Pago puntual:</b> Confirmación de recepción del pago</li>
+            <li>🎉 <b>Préstamo disponible:</b> Oferta basada en buen historial</li>
+          </ul>
+          <p>Al hacer clic, se abre WhatsApp con el mensaje listo. El cliente solo necesita tocar <b>Enviar</b>.</p>
+          <div class="callout">⚠️ No es automatizado — requiere un toque manual por mensaje. Para envíos automáticos necesitarías WhatsApp Business API (tiene costo con Meta).</div>
+        </div>
+        <div class="help-section" id="help-backup">
+          <h3>💾 Respaldo de Datos</h3>
+          <p>Tus datos se guardan en el <b>localStorage</b> del navegador (~5MB máx). Para no perderlos:</p>
+          <ul>
+            <li><b>JSON:</b> Backup completo de todos los datos, pequeño y restaurable</li>
+            <li><b>Excel (.xlsx):</b> 5 hojas con clientes, préstamos, cuotas, resumen y cobros pendientes</li>
+          </ul>
+          <div class="callout">⚠️ Si limpias el caché del navegador, <b>perderás los datos</b>. Haz backup regularmente en ⚙️ Config → Backup.</div>
+          <p>Puedes configurar backup automático: al hacer cada operación, diario, o semanal.</p>
+        </div>
+        <div class="help-section" id="help-cobrador">
+          <h3>🗺️ Vista del Cobrador</h3>
+          <p>La <b>Ruta del Cobrador</b> es una vista simplificada diseñada para quien hace los cobros en campo:</p>
+          <ul>
+            <li>Lista ordenada de cobros del día</li>
+            <li>Nombre, dirección y teléfono de cada cliente</li>
+            <li>Botón directo para registrar el cobro o enviar WhatsApp</li>
+            <li>Se puede imprimir en PDF como hoja de ruta física</li>
+          </ul>
+          <div class="callout">💡 Próximamente: integración con Google Maps para trazar la ruta óptima de cobros.</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="MODAL.close('modal-ayuda')">Entendido ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toast-icon">✅</span>
+  <span id="toast-msg">Guardado</span>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+  SCRIPTS
+══════════════════════════════════════════════════ -->
+<script>
+// ── Inline stub: will be replaced by external files in production
+// In this single-file version, all JS is inlined below
+</script>
+
+<!-- Core, PDF, XLSX, UI, Modals — inlined for single-file delivery -->
+<script>
+// ============================================================
+//  PRESTAMOCONTROL - CORE ENGINE v2.0
+// ============================================================
+
+const PC = {
+  version: '2.0.0',
+  buildDate: '2026-03-11',
+
+  // ── DEFAULT CONFIG ──────────────────────────────────────
+  defaultConfig: {
+    // Identidad del prestamista
+    prestamistaNombre: 'PrestamoControl',
+    prestamistaRFC: '',
+    prestamistaDir: '',
+    prestamistaTel: '',
+    prestamistaEmail: '',
+    prestamistaLogo: null,
+
+    // Defaults financieros
+    tasaDefecto: 10,
+    cuotasDefecto: 12,
+    frecuenciaDefecto: 'mensual',
+    tipoInteresDefecto: 'flat',
+    moraPorc: 5,         // % mora por pago atrasado
+    diasGracia: 3,
+
+    // UI
+    tema: 'dark',        // dark | light | high-contrast
+    tamanoFuente: 'normal', // small | normal | large | xlarge
+    colorAcento: '#00e5a0',
+    idioma: 'es',
+
+    // Backup
+    backupAuto: true,
+    backupFrecuencia: 'diario', // cada-operacion | diario | semanal
+    backupLocal: true,
+    backupDriveEnabled: false,
+    backupDriveFolder: '',
+    ultimoBackup: null,
+
+    // Seguridad
+    pinEnabled: false,
+    pinHash: null,
+    pinTimeout: 15, // minutos
+
+    // Notificaciones
+    whatsappDefaultTel: '',
+    recordatoriosDias: 1, // días antes del vencimiento
+    emailRemitente: '',
+
+    // Roles
+    rolActual: 'admin',   // admin | cobrador
+    cobradorPin: null,
+  },
+
+  // ── STATE ────────────────────────────────────────────────
+  state: {
+    clientes: [],
+    prestamos: [],
+    pagos: [],            // log completo de pagos
+    documentos: [],       // pagarés, contratos generados
+    backupLog: [],
+    nextClienteId: 1,
+    nextPrestamoId: 1,
+    nextPagoId: 1,
+    nextDocId: 1,
+  },
+  config: {},
+  session: {
+    unlocked: false,
+    role: 'admin',
+    unlockedAt: null,
+  },
+
+  // ── INIT ─────────────────────────────────────────────────
+  init() {
+    this.config = { ...this.defaultConfig };
+    this.loadAll();
+    this.applyTheme();
+    this.applyFontSize();
+    this.checkBackupSchedule();
+    this.scheduleReminders();
+  },
+
+  // ── PERSISTENCE ──────────────────────────────────────────
+  saveState() {
+    try {
+      localStorage.setItem('pc_state', JSON.stringify(this.state));
+      this.config.ultimoBackup = new Date().toISOString();
+      this.saveConfig();
+      if (this.config.backupAuto && this.config.backupFrecuencia === 'cada-operacion') {
+        this.exportBackupJSON(true);
+      }
+    } catch(e) { console.error('Save error:', e); }
+  },
+  saveConfig() {
+    localStorage.setItem('pc_config', JSON.stringify(this.config));
+  },
+  loadAll() {
+    try {
+      const s = localStorage.getItem('pc_state');
+      if (s) this.state = { ...this.state, ...JSON.parse(s) };
+      const c = localStorage.getItem('pc_config');
+      if (c) this.config = { ...this.config, ...JSON.parse(c) };
+    } catch(e) {}
+  },
+
+  // ── SECURITY ─────────────────────────────────────────────
+  hashPin(pin) {
+    // Simple hash (not crypto-secure, adequate for local app)
+    let h = 0;
+    for (let i = 0; i < pin.length; i++) {
+      h = ((h << 5) - h) + pin.charCodeAt(i);
+      h |= 0;
+    }
+    return h.toString(36);
+  },
+  setPin(pin) {
+    this.config.pinEnabled = true;
+    this.config.pinHash = this.hashPin(pin);
+    this.saveConfig();
+  },
+  verifyPin(pin) {
+    return this.hashPin(pin) === this.config.pinHash;
+  },
+  checkSession() {
+    if (!this.config.pinEnabled) return true;
+    if (!this.session.unlocked) return false;
+    const elapsed = (Date.now() - this.session.unlockedAt) / 60000;
+    if (elapsed > this.config.pinTimeout) {
+      this.session.unlocked = false;
+      return false;
+    }
+    return true;
+  },
+  unlock(pin) {
+    if (this.verifyPin(pin)) {
+      this.session.unlocked = true;
+      this.session.unlockedAt = Date.now();
+      return true;
+    }
+    return false;
+  },
+
+  // ── THEME ────────────────────────────────────────────────
+  applyTheme() {
+    document.documentElement.setAttribute('data-theme', this.config.tema);
+    document.documentElement.style.setProperty('--accent', this.config.colorAcento);
+    // derive accent variants
+    document.documentElement.style.setProperty('--accent-dim', this.config.colorAcento + '22');
+  },
+  applyFontSize() {
+    const sizes = { small: '13px', normal: '15px', large: '17px', xlarge: '20px' };
+    document.documentElement.style.setProperty('--base-font', sizes[this.config.tamanoFuente] || '15px');
+  },
+
+  // ── UTILS ────────────────────────────────────────────────
+  fmt: n => '$' + Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+  today: () => new Date().toISOString().split('T')[0],
+  nowISO: () => new Date().toISOString(),
+  addDays(date, d) { const dt = new Date(date); dt.setDate(dt.getDate() + d); return dt.toISOString().split('T')[0]; },
+  addMonths(date, m) { const dt = new Date(date); dt.setMonth(dt.getMonth() + m); return dt.toISOString().split('T')[0]; },
+  addWeeks(date, w) { return this.addDays(date, w * 7); },
+  diffDays(a, b) { return Math.floor((new Date(a) - new Date(b)) / 86400000); },
+  fmtDate(d) { return d ? new Date(d + 'T12:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'; },
+  initials(name) { return (name || '??').split(' ').slice(0, 2).map(n => n[0] || '').join('').toUpperCase(); },
+  avatarColor(name) {
+    let h = 0; for (let c of (name || '')) h = c.charCodeAt(0) + ((h << 5) - h);
+    const p = ['#00e5a0','#ff6b35','#7c6dfa','#ffa502','#ff4757','#2ed573','#1e90ff','#ff6b81','#eccc68'];
+    return p[Math.abs(h) % p.length];
+  },
+  uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); },
+
+  // ── LOAN HELPERS ─────────────────────────────────────────
+  generarCuotas(monto, tasa, numCuotas, frecuencia, fechaInicio, tipoInteres) {
+    let totalConInteres;
+    if (tipoInteres === 'flat') {
+      totalConInteres = monto * (1 + tasa / 100);
+    } else if (tipoInteres === 'cuota') {
+      totalConInteres = monto * (1 + (tasa / 100) * numCuotas);
+    } else { // simple
+      totalConInteres = monto + (monto * tasa / 100);
+    }
+    const cuotaValor = totalConInteres / numCuotas;
+    const cuotas = [];
+    let fecha = fechaInicio;
+    for (let i = 1; i <= numCuotas; i++) {
+      if (i > 1) {
+        if (frecuencia === 'semanal') fecha = this.addWeeks(fecha, 1);
+        else if (frecuencia === 'quincenal') fecha = this.addDays(fecha, 15);
+        else fecha = this.addMonths(fecha, 1);
+      }
+      cuotas.push({ num: i, fecha, monto: cuotaValor, pagado: false, fechaPago: null, montoPagado: 0, notaPago: '' });
+    }
+    return cuotas;
+  },
+  cuotasPagadas: p => p.cuotas.filter(c => c.pagado).length,
+  totalPagado: p => p.cuotas.filter(c => c.pagado).reduce((a, c) => a + (c.montoPagado || c.monto), 0),
+  totalPrestamo: p => p.cuotas.reduce((a, c) => a + c.monto, 0),
+  proximaCuota: p => p.cuotas.find(c => !c.pagado) || null,
+  estadoPrestamo(p) {
+    if (this.cuotasPagadas(p) === p.cuotas.length) return 'pagado';
+    const prox = this.proximaCuota(p);
+    if (prox) {
+      const dias = this.diffDays(this.today(), prox.fecha);
+      if (dias > this.config.diasGracia) return 'vencido';
+    }
+    return 'activo';
+  },
+  getCliente: function(id) { return this.state.clientes.find(c => c.id === id) || { nombre: 'Desconocido', telefono: '' }; },
+  getPrestamo: function(id) { return this.state.prestamos.find(p => p.id === id); },
+
+  // Análisis crediticio
+  analisisCredito(clienteId) {
+    const prestamos = this.state.prestamos.filter(p => p.clienteId === clienteId);
+    if (!prestamos.length) return { score: 50, nivel: 'nuevo', recomendacion: 0, resumen: 'Cliente nuevo sin historial.' };
+    let puntos = 50;
+    let puntualCount = 0, totalCuotas = 0, tardanzaTotal = 0;
+    prestamos.forEach(p => {
+      p.cuotas.filter(c => c.pagado).forEach(c => {
+        totalCuotas++;
+        const dias = this.diffDays(c.fechaPago, c.fecha);
+        if (dias <= 0) puntualCount++;
+        else tardanzaTotal += dias;
+      });
+    });
+    if (totalCuotas > 0) {
+      const pctPuntual = puntualCount / totalCuotas;
+      puntos = Math.round(pctPuntual * 100);
+    }
+    const pagados = prestamos.filter(p => this.estadoPrestamo(p) === 'pagado').length;
+    puntos = Math.min(100, puntos + pagados * 5);
+    let nivel, recomendacion;
+    if (puntos >= 85) { nivel = 'excelente'; recomendacion = 20000; }
+    else if (puntos >= 70) { nivel = 'bueno'; recomendacion = 10000; }
+    else if (puntos >= 50) { nivel = 'regular'; recomendacion = 5000; }
+    else { nivel = 'riesgo'; recomendacion = 0; }
+    const deudaActual = prestamos.filter(p => this.estadoPrestamo(p) !== 'pagado')
+      .reduce((a, p) => a + this.totalPrestamo(p) - this.totalPagado(p), 0);
+    return {
+      score: puntos, nivel, recomendacion, deudaActual,
+      totalPrestamos: prestamos.length, prestamosActivos: prestamos.filter(p => this.estadoPrestamo(p) === 'activo').length,
+      prestamosPagados: pagados, tardanzaPromedio: totalCuotas ? Math.round(tardanzaTotal / totalCuotas) : 0,
+      resumen: `${puntualCount}/${totalCuotas} pagos puntuales · Deuda actual: ${this.fmt(deudaActual)}`
+    };
+  },
+
+  // ── BACKUP ───────────────────────────────────────────────
+  exportBackupJSON(silent = false) {
+    const data = { version: this.version, fecha: this.nowISO(), state: this.state, config: { ...this.config, pinHash: null } };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    if (!silent) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `prestamocontrol_backup_${this.today()}.json`;
+      a.click();
+    }
+    this.state.backupLog.push({ fecha: this.nowISO(), tipo: 'JSON', tamaño: blob.size });
+    this.config.ultimoBackup = this.nowISO();
+    this.saveConfig();
+    return blob;
+  },
+  importBackupJSON(jsonStr) {
+    try {
+      const data = JSON.parse(jsonStr);
+      if (!data.state) throw new Error('Formato inválido');
+      this.state = { ...this.state, ...data.state };
+      this.saveState();
+      return true;
+    } catch(e) { return false; }
+  },
+  checkBackupSchedule() {
+    if (!this.config.backupAuto || !this.config.ultimoBackup) return;
+    const horasDesde = (Date.now() - new Date(this.config.ultimoBackup)) / 3600000;
+    const umbral = this.config.backupFrecuencia === 'diario' ? 24 : 168;
+    if (horasDesde >= umbral) this.exportBackupJSON(true);
+  },
+
+  // ── REMINDERS ────────────────────────────────────────────
+  scheduleReminders() {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'granted') this._fireReminders();
+    else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(p => { if (p === 'granted') this._fireReminders(); });
+    }
+  },
+  _fireReminders() {
+    const hoy = this.today();
+    const alerta = this.addDays(hoy, this.config.recordatoriosDias);
+    let count = 0;
+    this.state.prestamos.forEach(p => {
+      p.cuotas.forEach(c => {
+        if (!c.pagado && c.fecha === alerta) {
+          const cl = this.getCliente(p.clienteId);
+          count++;
+        }
+      });
+    });
+    if (count > 0) {
+      new Notification('PrestamoControl', { body: `${count} cobro(s) próximos en ${this.config.recordatoriosDias} día(s)`, icon: '💰' });
+    }
+  },
+
+  // ── WHATSAPP ─────────────────────────────────────────────
+  waLink(tel, msg) {
+    const t = tel.replace(/\D/g, '');
+    return `https://wa.me/${t}?text=${encodeURIComponent(msg)}`;
+  },
+  waMsgRecordatorio(clienteId, prestamoId) {
+    const cl = this.getCliente(clienteId);
+    const p = this.getPrestamo(prestamoId);
+    const prox = this.proximaCuota(p);
+    return `Hola ${cl.nombre.split(' ')[0]} 👋\n\nTe recordamos que tienes un pago próximo:\n💰 Monto: ${this.fmt(prox?.monto || 0)}\n📅 Fecha: ${prox?.fecha || '—'}\n\nGracias por tu puntualidad.\n— ${this.config.prestamistaNombre}`;
+  },
+  waMsgAtrasado(clienteId, prestamoId) {
+    const cl = this.getCliente(clienteId);
+    const p = this.getPrestamo(prestamoId);
+    const prox = this.proximaCuota(p);
+    const dias = prox ? this.diffDays(this.today(), prox.fecha) : 0;
+    return `Hola ${cl.nombre.split(' ')[0]},\n\nTu pago está atrasado ${dias} día(s):\n💰 Monto: ${this.fmt(prox?.monto || 0)}\n📅 Venció: ${prox?.fecha || '—'}\n\nPor favor regulariza tu situación a la brevedad.\n— ${this.config.prestamistaNombre}`;
+  },
+  waMsgPuntual(clienteId, monto) {
+    const cl = this.getCliente(clienteId);
+    return `Hola ${cl.nombre.split(' ')[0]} ✅\n\nHemos recibido tu pago de ${this.fmt(monto)}. ¡Gracias por tu puntualidad!\n\n— ${this.config.prestamistaNombre}`;
+  },
+  waMsgPrestamoDisponible(clienteId, monto) {
+    const cl = this.getCliente(clienteId);
+    return `Hola ${cl.nombre.split(' ')[0]} 🎉\n\nPor tu excelente historial, tienes disponible un préstamo de hasta ${this.fmt(monto)}.\n\n¿Te interesa? Contáctanos.\n— ${this.config.prestamistaNombre}`;
+  },
+
+  // ── DEMO DATA ────────────────────────────────────────────
+  cargarDemo() {
+    if (this.state.clientes.length > 0) return;
+    const clientes = [
+      { nombre:'María González', telefono:'+52 444 123 4567', telefono2:'', email:'maria@email.com', direccion:'Col. Centro, SLP', referencia:'Carlos González', ocupacion:'Comerciante', notas:'Cliente frecuente', documentos:[] },
+      { nombre:'Roberto Martínez', telefono:'+52 444 987 6543', telefono2:'', email:'roberto@email.com', direccion:'Col. Tangamanga, SLP', referencia:'Ana Martínez', ocupacion:'Albañil', notas:'Buen pagador', documentos:[] },
+      { nombre:'Lucía Hernández', telefono:'+52 444 555 1234', telefono2:'+52 444 555 5678', email:'lucia@email.com', direccion:'Col. Industrial, SLP', referencia:'Pedro Hernández', ocupacion:'Maestra', notas:'Siempre puntual', documentos:[] },
+      { nombre:'Jorge Ramírez', telefono:'+52 444 321 9876', telefono2:'', email:'', direccion:'Col. Morales, SLP', referencia:'Sin referencia', ocupacion:'Empleado', notas:'Riesgo medio', documentos:[] },
+    ];
+    clientes.forEach(c => { c.id = this.state.nextClienteId++; c.creado = this.today(); this.state.clientes.push(c); });
+
+    const hoy = this.today();
+    const f1 = this.addMonths(hoy, -3);
+    const c1 = this.generarCuotas(5000,10,6,'mensual',f1,'flat');
+    c1.slice(0,3).forEach((c,i)=>{c.pagado=true;c.fechaPago=this.addMonths(f1,i);c.montoPagado=c.monto;});
+    this.state.prestamos.push({id:this.state.nextPrestamoId++,clienteId:1,monto:5000,tasa:10,numCuotas:6,frecuencia:'mensual',fechaInicio:f1,tipoInteres:'flat',notas:'Capital de trabajo',cuotas:c1,estado:'activo',creado:f1});
+
+    const f2 = this.addMonths(hoy, -2);
+    const c2 = this.generarCuotas(3000,15,4,'mensual',f2,'flat');
+    c2[0].pagado=true;c2[0].fechaPago=f2;c2[0].montoPagado=c2[0].monto;
+    this.state.prestamos.push({id:this.state.nextPrestamoId++,clienteId:2,monto:3000,tasa:15,numCuotas:4,frecuencia:'mensual',fechaInicio:f2,tipoInteres:'flat',notas:'Gastos médicos',cuotas:c2,estado:'vencido',creado:f2});
+
+    const f3 = this.addMonths(hoy, -4);
+    const c3 = this.generarCuotas(2000,8,3,'mensual',f3,'flat');
+    c3.forEach((c,i)=>{c.pagado=true;c.fechaPago=this.addMonths(f3,i);c.montoPagado=c.monto;});
+    this.state.prestamos.push({id:this.state.nextPrestamoId++,clienteId:3,monto:2000,tasa:8,numCuotas:3,frecuencia:'mensual',fechaInicio:f3,tipoInteres:'flat',notas:'Reparación hogar',cuotas:c3,estado:'pagado',creado:f3});
+
+    const c4 = this.generarCuotas(4000,12,8,'semanal',hoy,'flat');
+    this.state.prestamos.push({id:this.state.nextPrestamoId++,clienteId:1,monto:4000,tasa:12,numCuotas:8,frecuencia:'semanal',fechaInicio:hoy,tipoInteres:'flat',notas:'Segundo préstamo',cuotas:c4,estado:'activo',creado:hoy});
+
+    const f5 = this.addMonths(hoy, -1);
+    const c5 = this.generarCuotas(8000,10,12,'mensual',f5,'flat');
+    c5[0].pagado=true;c5[0].fechaPago=f5;c5[0].montoPagado=c5[0].monto;
+    this.state.prestamos.push({id:this.state.nextPrestamoId++,clienteId:4,monto:8000,tasa:10,numCuotas:12,frecuencia:'mensual',fechaInicio:f5,tipoInteres:'flat',notas:'Negocio',cuotas:c5,estado:'activo',creado:f5});
+
+    this.saveState();
+  },
+};
+
+// ============================================================
+//  PRESTAMOCONTROL - PDF MODULE
+//  Uses jsPDF (loaded from CDN)
+// ============================================================
+
+const PCPDF = {
+
+  // ── HELPERS ──────────────────────────────────────────────
+  newDoc(landscape = false) {
+    return new window.jspdf.jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'mm', format: 'a4' });
+  },
+  header(doc, titulo, subtitulo) {
+    const cfg = PC.config;
+    doc.setFillColor(13, 15, 20);
+    doc.rect(0, 0, 210, 38, 'F');
+
+    // Logo text
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(0, 229, 160);
+    doc.text(cfg.prestamistaNombre || 'PrestamoControl', 14, 16);
+
+    doc.setFontSize(8);
+    doc.setTextColor(150, 160, 180);
+    const infos = [cfg.prestamistaDir, cfg.prestamistaTel, cfg.prestamistaEmail, cfg.prestamistaRFC].filter(Boolean);
+    doc.text(infos.join('  ·  '), 14, 22);
+
+    doc.setFontSize(13);
+    doc.setTextColor(230, 235, 244);
+    doc.setFont('helvetica', 'bold');
+    doc.text(titulo, 14, 31);
+
+    if (subtitulo) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(120, 130, 148);
+      doc.text(subtitulo, 14, 36);
+    }
+
+    // Date top right
+    doc.setFontSize(8);
+    doc.setTextColor(120, 130, 148);
+    doc.text(new Date().toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' }), 196, 10, { align: 'right' });
+
+    return 44; // y position after header
+  },
+  footer(doc, pageNum) {
+    const total = doc.internal.getNumberOfPages();
+    doc.setFontSize(7);
+    doc.setTextColor(100, 110, 130);
+    doc.text(`PrestamoControl · Generado ${new Date().toLocaleString('es-MX')} · Pág ${pageNum}/${total}`, 105, 290, { align: 'center' });
+    doc.setDrawColor(40, 50, 70);
+    doc.line(14, 286, 196, 286);
+  },
+  sectionTitle(doc, txt, y) {
+    doc.setFillColor(26, 32, 44);
+    doc.rect(14, y - 4, 182, 8, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(0, 229, 160);
+    doc.text(txt.toUpperCase(), 16, y + 1);
+    return y + 8;
+  },
+  row(doc, label, value, y, light = false) {
+    if (light) { doc.setFillColor(245, 247, 250); doc.rect(14, y - 4, 182, 7, 'F'); }
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(100, 110, 130);
+    doc.text(label, 16, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(20, 25, 35);
+    doc.text(String(value), 100, y);
+    return y + 8;
+  },
+
+  // ── COMPROBANTE DE PAGO ──────────────────────────────────
+  generarComprobante(prestamoId, cuotaNum) {
+    const p = PC.getPrestamo(prestamoId);
+    const cl = PC.getCliente(p.clienteId);
+    const cuota = p.cuotas.find(c => c.num === cuotaNum);
+    const doc = this.newDoc();
+    let y = this.header(doc, 'COMPROBANTE DE PAGO', `Folio: CPF-${prestamoId}-${cuotaNum}`);
+
+    // Box
+    doc.setDrawColor(0, 229, 160);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(14, y, 182, 60, 3, 3);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(20, 25, 35);
+    doc.text('PAGO RECIBIDO', 105, y + 12, { align: 'center' });
+
+    doc.setFontSize(22);
+    doc.setTextColor(0, 229, 160);
+    doc.text(PC.fmt(cuota.montoPagado || cuota.monto), 105, y + 26, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.setTextColor(100, 110, 130);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Cliente: ${cl.nombre}`, 105, y + 36, { align: 'center' });
+    doc.text(`Cuota ${cuota.num} de ${p.numCuotas}  ·  Fecha de pago: ${cuota.fechaPago}`, 105, y + 43, { align: 'center' });
+    doc.text(`Préstamo #${p.id}  ·  Capital original: ${PC.fmt(p.monto)}`, 105, y + 50, { align: 'center' });
+
+    y += 68;
+    y = this.sectionTitle(doc, 'Detalle del Préstamo', y);
+    let alt = false;
+    const rows = [
+      ['Cliente', cl.nombre], ['Teléfono', cl.telefono || '—'],
+      ['Monto del préstamo', PC.fmt(p.monto)], ['Tasa de interés', `${p.tasa}%`],
+      ['Total a pagar', PC.fmt(PC.totalPrestamo(p))], ['Cuotas pagadas', `${PC.cuotasPagadas(p)} de ${p.numCuotas}`],
+      ['Saldo pendiente', PC.fmt(PC.totalPrestamo(p) - PC.totalPagado(p))],
+      ['Fecha de pago', cuota.fechaPago], ['Nota', cuota.notaPago || '—'],
+    ];
+    rows.forEach(([l, v]) => { y = this.row(doc, l, v, y, alt = !alt); });
+
+    // Firma
+    y += 10;
+    doc.setDrawColor(180, 190, 210);
+    doc.line(14, y + 15, 80, y + 15);
+    doc.line(130, y + 15, 196, y + 15);
+    doc.setFontSize(8); doc.setTextColor(120, 130, 148);
+    doc.text('Firma del prestamista', 47, y + 20, { align: 'center' });
+    doc.text('Firma del cliente', 163, y + 20, { align: 'center' });
+    doc.text(PC.config.prestamistaNombre, 47, y + 25, { align: 'center' });
+    doc.text(cl.nombre, 163, y + 25, { align: 'center' });
+
+    this.footer(doc, 1);
+    return doc;
+  },
+
+  // ── PAGARÉ ───────────────────────────────────────────────
+  generarPagare(prestamoId) {
+    const p = PC.getPrestamo(prestamoId);
+    const cl = PC.getCliente(p.clienteId);
+    const total = PC.totalPrestamo(p);
+    const cuota = p.cuotas[0];
+    const doc = this.newDoc();
+    let y = this.header(doc, 'PAGARÉ', `Folio: PAG-${p.id}-${p.creado}`);
+
+    // PAGARÉ title
+    doc.setDrawColor(0, 229, 160);
+    doc.setLineWidth(1);
+    doc.rect(14, y, 182, 10);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(20, 25, 35);
+    doc.text('P A G A R É', 105, y + 7, { align: 'center' });
+    y += 14;
+
+    // Monto en caja
+    doc.setFillColor(248, 250, 252);
+    doc.rect(14, y, 90, 18, 'F');
+    doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.setTextColor(100, 110, 130);
+    doc.text('CANTIDAD:', 16, y + 7);
+    doc.setFontSize(14); doc.setTextColor(0, 229, 160);
+    doc.text(PC.fmt(total), 16, y + 14);
+    // Lugar y fecha
+    doc.setFillColor(248, 250, 252);
+    doc.rect(108, y, 88, 18, 'F');
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(100, 110, 130);
+    doc.text(`Lugar y fecha: ${p.fechaInicio}`, 110, y + 7);
+    doc.text(`Vencimiento: ${p.cuotas[p.cuotas.length-1]?.fecha || '—'}`, 110, y + 14);
+    y += 22;
+
+    // Body text
+    const bodyText = `Yo, ${cl.nombre}, con domicilio en ${cl.direccion || '___________________'}, me comprometo incondicionalmente a pagar a la orden de ${PC.config.prestamistaNombre || 'el prestamista'}, la cantidad de ${PC.fmt(total)} (${this._numeroALetras(total)} PESOS M.N.), correspondiente a un préstamo otorgado por la cantidad de ${PC.fmt(p.monto)}, más intereses pactados del ${p.tasa}% (${p.tipoInteres}), pagadero en ${p.numCuotas} cuotas ${p.frecuencia}s de ${PC.fmt(cuota.monto)} cada una, siendo la primera con vencimiento el día ${cuota.fecha}.`;
+
+    doc.setFontSize(9.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(30, 35, 45);
+    const lines = doc.splitTextToSize(bodyText, 178);
+    doc.text(lines, 16, y);
+    y += lines.length * 5 + 6;
+
+    // Tabla de cuotas
+    y = this.sectionTitle(doc, 'Tabla de Amortización', y);
+    // Header
+    doc.setFillColor(13, 15, 20);
+    doc.rect(14, y - 2, 182, 8, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(0, 229, 160);
+    doc.text('#', 16, y + 3); doc.text('Fecha', 30, y + 3); doc.text('Cuota', 80, y + 3);
+    doc.text('Capital', 115, y + 3); doc.text('Interés', 148, y + 3); doc.text('Saldo', 178, y + 3);
+    y += 8;
+
+    const interesXCuota = (PC.totalPrestamo(p) - p.monto) / p.numCuotas;
+    const capitalXCuota = p.monto / p.numCuotas;
+    let saldo = p.monto;
+
+    p.cuotas.forEach((c, i) => {
+      if (y > 265) { this.footer(doc, doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = 20; }
+      const bg = i % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+      doc.setFillColor(...bg); doc.rect(14, y - 3, 182, 6, 'F');
+      saldo -= capitalXCuota;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(30, 35, 45);
+      doc.text(String(c.num), 16, y + 1);
+      doc.text(c.fecha, 30, y + 1);
+      doc.text(PC.fmt(c.monto), 72, y + 1, { align: 'right' });
+      doc.text(PC.fmt(capitalXCuota), 107, y + 1, { align: 'right' });
+      doc.text(PC.fmt(interesXCuota), 140, y + 1, { align: 'right' });
+      doc.text(PC.fmt(Math.max(0, saldo)), 173, y + 1, { align: 'right' });
+      if (c.pagado) {
+        doc.setTextColor(0, 229, 160); doc.setFontSize(7);
+        doc.text('✓ PAGADO', 190, y + 1);
+      }
+      y += 6;
+    });
+
+    y += 8;
+    // Firmas
+    if (y > 240) { doc.addPage(); y = 20; }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(60, 70, 90);
+    doc.text(`Este pagaré fue otorgado en ${PC.config.prestamistaDir || '___________________'} el día ${p.fechaInicio}.`, 16, y);
+    y += 15;
+    doc.setDrawColor(100, 110, 130);
+    doc.line(14, y + 20, 90, y + 20);
+    doc.line(120, y + 20, 196, y + 20);
+    doc.setFontSize(8); doc.setTextColor(100, 110, 130);
+    doc.text('FIRMA DEL DEUDOR', 52, y + 26, { align: 'center' });
+    doc.text('FIRMA DEL ACREEDOR', 158, y + 26, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 25, 35);
+    doc.text(cl.nombre, 52, y + 32, { align: 'center' });
+    doc.text(PC.config.prestamistaNombre || 'Prestamista', 158, y + 32, { align: 'center' });
+
+    this.footer(doc, doc.internal.getCurrentPageInfo().pageNumber);
+    return doc;
+  },
+
+  // ── CONTRATO ─────────────────────────────────────────────
+  generarContrato(prestamoId) {
+    const p = PC.getPrestamo(prestamoId);
+    const cl = PC.getCliente(p.clienteId);
+    const total = PC.totalPrestamo(p);
+    const doc = this.newDoc();
+    let y = this.header(doc, 'CONTRATO DE PRÉSTAMO PERSONAL', `Contrato #${p.id}`);
+
+    const clausulas = [
+      ['PRIMERA - PRÉSTAMO', `${PC.config.prestamistaNombre || 'EL PRESTAMISTA'} otorga en préstamo a ${cl.nombre} ("EL DEUDOR") la cantidad de ${PC.fmt(p.monto)}, la cual declara recibir en este acto a su entera satisfacción.`],
+      ['SEGUNDA - INTERESES', `EL DEUDOR se compromete a pagar intereses del ${p.tasa}% (${p.tipoInteres}), resultando un total a pagar de ${PC.fmt(total)}, pagadero en ${p.numCuotas} cuotas ${p.frecuencia}s.`],
+      ['TERCERA - PAGO', `El pago se realizará en cuotas de ${PC.fmt(total / p.numCuotas)}, con vencimiento de la primera cuota el día ${p.cuotas[0]?.fecha || '—'} y la última el día ${p.cuotas[p.cuotas.length-1]?.fecha || '—'}.`],
+      ['CUARTA - MORA', `En caso de atraso en el pago, EL DEUDOR reconoce y acepta pagar un cargo adicional por mora del ${PC.config.moraPorc}% sobre el monto vencido por cada período de retraso, contados a partir del día ${PC.config.diasGracia + 1} de vencimiento.`],
+      ['QUINTA - DOMICILIO', `EL DEUDOR señala como su domicilio para efectos de notificación: ${cl.direccion || '________________________________'}.`],
+      ['SEXTA - AVAL', `Como aval y obligado solidario se designa a: ${cl.referencia || '________________________________'}.`],
+      ['SÉPTIMA - JURISDICCIÓN', `Las partes acuerdan que para cualquier controversia derivada del presente contrato, se someten a la jurisdicción de los tribunales competentes de la localidad.`],
+    ];
+
+    clausulas.forEach(([titulo, texto]) => {
+      if (y > 240) { this.footer(doc, doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = 20; }
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(0, 229, 160);
+      doc.text(titulo, 16, y); y += 5;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(30, 35, 45);
+      const lines = doc.splitTextToSize(texto, 178);
+      doc.text(lines, 16, y); y += lines.length * 4.5 + 5;
+    });
+
+    y += 10;
+    if (y > 245) { doc.addPage(); y = 20; }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(60, 70, 90);
+    doc.text(`Firmado en ${PC.config.prestamistaDir || '_______________'}, a ${p.fechaInicio}.`, 16, y);
+    y += 20;
+    doc.setDrawColor(100, 110, 130);
+    doc.line(14, y, 90, y); doc.line(120, y, 196, y);
+    doc.setFontSize(8); doc.setTextColor(100, 110, 130);
+    doc.text('EL DEUDOR', 52, y + 5, { align: 'center' });
+    doc.text('EL PRESTAMISTA', 158, y + 5, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(20, 25, 35);
+    doc.text(cl.nombre, 52, y + 11, { align: 'center' });
+    doc.text(PC.config.prestamistaNombre || 'Prestamista', 158, y + 11, { align: 'center' });
+
+    this.footer(doc, doc.internal.getCurrentPageInfo().pageNumber);
+    return doc;
+  },
+
+  // ── ESTADO DE CUENTA CLIENTE ─────────────────────────────
+  generarEstadoCuenta(clienteId) {
+    const cl = PC.getCliente(clienteId);
+    const prestamos = PC.state.prestamos.filter(p => p.clienteId === clienteId);
+    const analisis = PC.analisisCredito(clienteId);
+    const doc = this.newDoc();
+    let y = this.header(doc, 'ESTADO DE CUENTA', cl.nombre);
+
+    y = this.sectionTitle(doc, 'Datos del Cliente', y);
+    let alt = false;
+    [['Nombre', cl.nombre],['Teléfono', cl.telefono||'—'],['Email', cl.email||'—'],['Dirección', cl.direccion||'—'],['Referencia', cl.referencia||'—']].forEach(([l,v]) => { y = this.row(doc, l, v, y, alt=!alt); });
+
+    y += 4;
+    y = this.sectionTitle(doc, 'Análisis Crediticio', y);
+    const nivelColors = { excelente: [0,229,160], bueno: [30,144,255], regular: [255,165,2], riesgo: [255,71,87], nuevo: [150,160,180] };
+    doc.setFillColor(...(nivelColors[analisis.nivel] || [150,160,180]));
+    doc.roundedRect(14, y, 50, 14, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor(255,255,255);
+    doc.text(String(analisis.score), 39, y + 10, { align: 'center' });
+    doc.setFontSize(8); doc.text(analisis.nivel.toUpperCase(), 39, y + 14, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(60,70,90);
+    doc.text(`Préstamo recomendado: ${PC.fmt(analisis.recomendacion)}`, 70, y + 6);
+    doc.text(analisis.resumen, 70, y + 12);
+    y += 20;
+
+    prestamos.forEach(p => {
+      if (y > 230) { this.footer(doc, doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = 20; }
+      const est = PC.estadoPrestamo(p);
+      y = this.sectionTitle(doc, `Préstamo #${p.id} — ${est.toUpperCase()}`, y);
+      const rows2 = [
+        ['Capital', PC.fmt(p.monto)], ['Tasa', `${p.tasa}%`], ['Total', PC.fmt(PC.totalPrestamo(p))],
+        ['Pagado', PC.fmt(PC.totalPagado(p))], ['Saldo', PC.fmt(PC.totalPrestamo(p)-PC.totalPagado(p))],
+        ['Cuotas', `${PC.cuotasPagadas(p)} / ${p.numCuotas}`], ['Inicio', p.fechaInicio],
+      ];
+      alt = false;
+      rows2.forEach(([l,v]) => { y = this.row(doc, l, v, y, alt=!alt); });
+      y += 4;
+    });
+
+    this.footer(doc, doc.internal.getCurrentPageInfo().pageNumber);
+    return doc;
+  },
+
+  // ── REPORTE COBROS DEL DÍA ───────────────────────────────
+  generarReporteCobros(fecha) {
+    fecha = fecha || PC.today();
+    const items = [];
+    PC.state.prestamos.forEach(p => {
+      p.cuotas.forEach(c => {
+        if (!c.pagado && c.fecha <= fecha) {
+          const cl = PC.getCliente(p.clienteId);
+          items.push({ cl, p, c, dias: PC.diffDays(fecha, c.fecha) });
+        }
+      });
+    });
+    const doc = this.newDoc(true); // landscape for cobros
+    let y = this.header(doc, 'RUTA DE COBROS', `Fecha: ${fecha} · ${items.length} cobros`);
+
+    // Table header
+    doc.setFillColor(13, 15, 20); doc.rect(14, y - 2, 269, 8, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(0, 229, 160);
+    ['#', 'Cliente', 'Teléfono', 'Dirección', 'Cuota', 'Fecha', 'Monto', 'Días', 'Cobrado'].forEach((h, i) => {
+      const xs = [16, 24, 80, 115, 165, 185, 205, 225, 245];
+      doc.text(h, xs[i], y + 3);
+    });
+    y += 8;
+
+    let total = 0;
+    items.forEach((item, i) => {
+      if (y > 175) { this.footer(doc, doc.internal.getCurrentPageInfo().pageNumber); doc.addPage(); y = 20; }
+      const bg = i % 2 === 0 ? [248, 250, 252] : [255, 255, 255];
+      doc.setFillColor(...bg); doc.rect(14, y - 3, 269, 7, 'F');
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(20, 25, 35);
+      doc.text(String(i+1), 16, y+1);
+      doc.text(item.cl.nombre.slice(0,22), 24, y+1);
+      doc.text(item.cl.telefono||'—', 80, y+1);
+      doc.text((item.cl.direccion||'—').slice(0,24), 115, y+1);
+      doc.text(`${item.c.num}/${item.p.numCuotas}`, 165, y+1);
+      doc.text(item.c.fecha, 185, y+1);
+      doc.text(PC.fmt(item.c.monto), 205, y+1);
+      doc.setTextColor(item.dias > 0 ? 255 : item.dias === 0 ? 255 : 100, item.dias > 0 ? 71 : 165, item.dias > 0 ? 87 : item.dias === 0 ? 2 : 130);
+      doc.text(item.dias > 0 ? `+${item.dias}d` : item.dias === 0 ? 'Hoy' : `${item.dias}d`, 225, y+1);
+      doc.setTextColor(20, 25, 35);
+      doc.rect(244, y-2, 10, 5); // checkbox
+      total += item.c.monto;
+      y += 7;
+    });
+
+    y += 5;
+    doc.setFillColor(0, 229, 160); doc.rect(14, y, 269, 8, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(13, 15, 20);
+    doc.text('TOTAL A COBRAR', 16, y + 5);
+    doc.text(PC.fmt(total), 260, y + 5, { align: 'right' });
+
+    this.footer(doc, 1);
+    return doc;
+  },
+
+  // ── NÚMERO A LETRAS (simple) ─────────────────────────────
+  _numeroALetras(num) {
+    const u = ['','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE'];
+    const d = ['','','VEINTE','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+    const c = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+    const n = Math.floor(num);
+    if (n === 0) return 'CERO';
+    if (n < 20) return u[n];
+    if (n < 100) return d[Math.floor(n/10)] + (n%10 ? ' Y ' + u[n%10] : '');
+    if (n < 1000) return (n===100?'CIEN':c[Math.floor(n/100)]) + (n%100 ? ' ' + this._numeroALetras(n%100) : '');
+    if (n < 1000000) return (n<2000?'MIL':this._numeroALetras(Math.floor(n/1000))+' MIL') + (n%1000?' '+this._numeroALetras(n%1000):'');
+    return String(n);
+  },
+
+  // ── OPEN/SAVE ────────────────────────────────────────────
+  abrir(doc) { doc.output('dataurlnewwindow'); },
+  descargar(doc, nombre) { doc.save(nombre + '.pdf'); },
+  blob(doc) { return doc.output('blob'); },
+};
+
+// ============================================================
+//  PRESTAMOCONTROL - XLSX MODULE
+//  Uses SheetJS (XLSX) loaded from CDN
+// ============================================================
+
+const PCXLSX = {
+
+  // ── BACKUP COMPLETO ──────────────────────────────────────
+  exportarBackupCompleto() {
+    const wb = XLSX.utils.book_new();
+
+    // Hoja 1: Clientes
+    const clientesData = [
+      ['ID','Nombre','Teléfono','Teléfono 2','Email','Dirección','Referencia','Ocupación','Notas','Fecha Alta'],
+      ...PC.state.clientes.map(c => [c.id,c.nombre,c.telefono,c.telefono2||'',c.email||'',c.direccion,c.referencia,c.ocupacion||'',c.notas,c.creado])
+    ];
+    const wsC = XLSX.utils.aoa_to_sheet(clientesData);
+    wsC['!cols'] = [5,25,15,15,25,30,20,15,20,12].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, wsC, 'Clientes');
+
+    // Hoja 2: Préstamos
+    const prestamosData = [
+      ['ID','Cliente','Monto','Tasa %','Cuotas','Frecuencia','Tipo Interés','Total','Capital Pagado','Saldo','Estado','Fecha Inicio','Notas'],
+      ...PC.state.prestamos.map(p => {
+        const cl = PC.getCliente(p.clienteId);
+        return [p.id, cl.nombre, p.monto, p.tasa, p.numCuotas, p.frecuencia, p.tipoInteres,
+          PC.totalPrestamo(p), PC.totalPagado(p), PC.totalPrestamo(p)-PC.totalPagado(p),
+          PC.estadoPrestamo(p), p.fechaInicio, p.notas||''];
+      })
+    ];
+    const wsP = XLSX.utils.aoa_to_sheet(prestamosData);
+    wsP['!cols'] = [5,25,12,8,8,12,12,14,14,14,10,12,25].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, wsP, 'Préstamos');
+
+    // Hoja 3: Cuotas / Pagos
+    const cuotasData = [
+      ['Préstamo ID','Cliente','Cuota #','Fecha Esperada','Monto','Pagado','Fecha Pago','Monto Pagado','Nota Pago'],
+    ];
+    PC.state.prestamos.forEach(p => {
+      const cl = PC.getCliente(p.clienteId);
+      p.cuotas.forEach(c => {
+        cuotasData.push([p.id, cl.nombre, c.num, c.fecha, c.monto, c.pagado?'SÍ':'NO', c.fechaPago||'', c.montoPagado||0, c.notaPago||'']);
+      });
+    });
+    const wsQ = XLSX.utils.aoa_to_sheet(cuotasData);
+    wsQ['!cols'] = [10,25,8,14,12,8,12,14,20].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, wsQ, 'Cuotas');
+
+    // Hoja 4: Resumen Financiero
+    const activos = PC.state.prestamos.filter(p=>PC.estadoPrestamo(p)==='activo');
+    const vencidos = PC.state.prestamos.filter(p=>PC.estadoPrestamo(p)==='vencido');
+    const pagados = PC.state.prestamos.filter(p=>PC.estadoPrestamo(p)==='pagado');
+    const resumenData = [
+      ['RESUMEN FINANCIERO - PrestamoControl', '', new Date().toLocaleDateString('es-MX')],
+      [],
+      ['Indicador','Valor'],
+      ['Total clientes', PC.state.clientes.length],
+      ['Total préstamos', PC.state.prestamos.length],
+      ['Préstamos activos', activos.length],
+      ['Préstamos vencidos', vencidos.length],
+      ['Préstamos pagados', pagados.length],
+      [],
+      ['Capital total prestado', PC.state.prestamos.reduce((a,p)=>a+p.monto,0)],
+      ['Total por cobrar', [...activos,...vencidos].reduce((a,p)=>a+(PC.totalPrestamo(p)-PC.totalPagado(p)),0)],
+      ['Total cobrado', PC.state.prestamos.reduce((a,p)=>a+PC.totalPagado(p),0)],
+      ['Intereses cobrados', PC.state.prestamos.reduce((a,p)=>{
+        const r=(PC.totalPrestamo(p)-p.monto)/PC.totalPrestamo(p)||0;
+        return a+PC.totalPagado(p)*r;
+      },0)],
+    ];
+    const wsR = XLSX.utils.aoa_to_sheet(resumenData);
+    wsR['!cols'] = [{wch:30},{wch:20},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, wsR, 'Resumen');
+
+    // Hoja 5: Cobros pendientes
+    const cobrosData = [['Cliente','Teléfono','Préstamo #','Cuota #','Fecha','Monto','Días Retraso']];
+    PC.state.prestamos.forEach(p => {
+      const cl = PC.getCliente(p.clienteId);
+      p.cuotas.filter(c=>!c.pagado).forEach(c => {
+        const dias = PC.diffDays(PC.today(), c.fecha);
+        cobrosData.push([cl.nombre, cl.telefono||'', p.id, c.num, c.fecha, c.monto, dias]);
+      });
+    });
+    const wsCob = XLSX.utils.aoa_to_sheet(cobrosData);
+    wsCob['!cols'] = [25,15,10,8,14,14,12].map(w=>({wch:w}));
+    XLSX.utils.book_append_sheet(wb, wsCob, 'Cobros Pendientes');
+
+    const fecha = PC.today();
+    XLSX.writeFile(wb, `PrestamoControl_Backup_${fecha}.xlsx`);
+    PC.state.backupLog.push({ fecha: PC.nowISO(), tipo: 'XLSX' });
+    PC.saveState();
+    return true;
+  },
+
+  // ── IMPORTAR DESDE XLSX ──────────────────────────────────
+  importarDesdeXLSX(file, callback) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'binary' });
+        const wsC = wb.Sheets['Clientes'];
+        const wsP = wb.Sheets['Préstamos'];
+        if (!wsC || !wsP) { callback(false, 'Archivo inválido: faltan hojas'); return; }
+        // Basic import of clients
+        const clientes = XLSX.utils.sheet_to_json(wsC);
+        callback(true, `${clientes.length} clientes encontrados en el archivo`);
+      } catch(e) { callback(false, 'Error al leer archivo: ' + e.message); }
+    };
+    reader.readAsBinaryString(file);
+  },
+
+  // ── EXPORTAR COBROS HOY ──────────────────────────────────
+  exportarCobrosHoy() {
+    const hoy = PC.today();
+    const cobros = [];
+    PC.state.prestamos.forEach(p => {
+      const cl = PC.getCliente(p.clienteId);
+      p.cuotas.filter(c=>!c.pagado&&c.fecha<=hoy).forEach(c=>{
+        cobros.push({
+          'Cliente': cl.nombre, 'Teléfono': cl.telefono||'', 'Dirección': cl.direccion||'',
+          'Préstamo #': p.id, 'Cuota #': c.num, 'Total Cuotas': p.numCuotas,
+          'Fecha Esperada': c.fecha, 'Monto': c.monto,
+          'Días Retraso': PC.diffDays(hoy, c.fecha), 'Cobrado': ''
+        });
+      });
+    });
+    const ws = XLSX.utils.json_to_sheet(cobros);
+    ws['!cols'] = [20,14,25,10,8,10,14,12,12,12].map(w=>({wch:w}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Cobros del Día');
+    XLSX.writeFile(wb, `Cobros_${hoy}.xlsx`);
+  },
+};
+
+// ============================================================
+//  PRESTAMOCONTROL - UI ENGINE v2.0
+// ============================================================
+
+const UI = {
+  currentView: 'dashboard',
+  detailType: null,
+  detailId: null,
+  cobrosFiltro: 'pendientes',
+
+  // ── INIT ─────────────────────────────────────────────────
+  init() {
+    this.updateSidebar();
+    this.showView('dashboard');
+    document.getElementById('fecha-hoy').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    document.getElementById('fecha-cobros').textContent = new Date().toLocaleDateString('es-MX',{weekday:'long',day:'2-digit',month:'long'});
+  },
+
+  // ── VIEW ROUTING ─────────────────────────────────────────
+  showView(name) {
+    this.currentView = name;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const v = document.getElementById('view-' + name);
+    if (v) v.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if ((n.dataset.view||'') === name) n.classList.add('active');
+    });
+    this.closeDetail();
+    const renders = {
+      dashboard: () => this.renderDashboard(),
+      prestamos: () => this.renderPrestamos(),
+      clientes: () => this.renderClientes(),
+      cobros: () => this.renderCobros(),
+      reportes: () => this.renderReportes(),
+      cobrador: () => this.renderCobrador(),
+    };
+    (renders[name] || (() => {}))();
+  },
+
+  // ── SIDEBAR ──────────────────────────────────────────────
+  updateSidebar() {
+    const por = PC.state.prestamos
+      .filter(p=>PC.estadoPrestamo(p)!=='pagado')
+      .reduce((a,p)=>a+(PC.totalPrestamo(p)-PC.totalPagado(p)),0);
+    document.getElementById('sb-capital').textContent = PC.fmt(por);
+    document.getElementById('sb-nombre').textContent = PC.config.prestamistaNombre || 'PrestamoControl';
+    // Cobros hoy badge
+    const n = this._cobrosHoyCount();
+    const badge = document.getElementById('badge-cobros');
+    if (badge) { badge.textContent = n; badge.style.display = n > 0 ? 'inline' : 'none'; }
+  },
+  _cobrosHoyCount() {
+    const hoy = PC.today();
+    let n = 0;
+    PC.state.prestamos.forEach(p => p.cuotas.forEach(c => { if(!c.pagado && c.fecha <= hoy) n++; }));
+    return n;
+  },
+
+  // ── BADGE ESTADO ─────────────────────────────────────────
+  badge(est) {
+    const m = { activo:'badge-active', vencido:'badge-late', pagado:'badge-paid', nuevo:'badge-pending' };
+    const l = { activo:'Activo', vencido:'Vencido', pagado:'Pagado', nuevo:'Nuevo' };
+    return `<span class="badge ${m[est]||'badge-pending'}">${l[est]||est}</span>`;
+  },
+  badgeCredito(nivel) {
+    const c = { excelente:'#00e5a0', bueno:'#1e90ff', regular:'#ffa502', riesgo:'#ff4757', nuevo:'#6b7494' };
+    return `<span class="badge" style="background:${c[nivel]||'#6b7494'}22;color:${c[nivel]||'#6b7494'}">${nivel}</span>`;
+  },
+  avatarEl(nombre, size=34) {
+    const color = PC.avatarColor(nombre);
+    return `<span class="avatar" style="width:${size}px;height:${size}px;background:${color}22;color:${color};font-size:${Math.round(size*0.38)}px">${PC.initials(nombre)}</span>`;
+  },
+
+  // ── TOAST ────────────────────────────────────────────────
+  toast(msg, icon='✅', type='') {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    document.getElementById('toast-icon').textContent = icon;
+    t.className = 'toast show' + (type ? ' toast-'+type : '');
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+  },
+
+  // ────────────────────────────────────────────────────────
+  //  DASHBOARD
+  // ────────────────────────────────────────────────────────
+  renderDashboard() {
+    const activos = PC.state.prestamos.filter(p=>PC.estadoPrestamo(p)==='activo');
+    const vencidos = PC.state.prestamos.filter(p=>PC.estadoPrestamo(p)==='vencido');
+    const cobrar = [...activos,...vencidos].reduce((a,p)=>a+(PC.totalPrestamo(p)-PC.totalPagado(p)),0);
+    const cobrado = PC.state.prestamos.reduce((a,p)=>a+PC.totalPagado(p),0);
+    const intereses = PC.state.prestamos.reduce((a,p)=>{
+      if(!PC.totalPrestamo(p)) return a;
+      return a+PC.totalPagado(p)*((PC.totalPrestamo(p)-p.monto)/PC.totalPrestamo(p));
+    },0);
+
+    this._setKPI('kpi-capital', PC.fmt(cobrar), `${activos.length} activos · ${vencidos.length} vencidos`);
+    this._setKPI('kpi-cobrado', PC.fmt(cobrado), `Intereses: ${PC.fmt(intereses)}`);
+    this._setKPI('kpi-vencidos', String(vencidos.length), vencidos.length>0?`${PC.fmt(vencidos.reduce((a,p)=>a+(PC.totalPrestamo(p)-PC.totalPagado(p)),0))} en riesgo`:'Todo al día ✓');
+    this._setKPI('kpi-clientes', String(PC.state.clientes.length), `${PC.state.prestamos.length} préstamos totales`);
+
+    this.updateSidebar();
+
+    // Cobros hoy
+    const hoy = PC.today();
+    const cobrosHoy = [];
+    PC.state.prestamos.forEach(p => p.cuotas.forEach(c => {
+      if(!c.pagado && c.fecha === hoy) cobrosHoy.push({p,c});
+    }));
+    const sumHoy = cobrosHoy.reduce((a,x)=>a+x.c.monto,0);
+    document.getElementById('cobros-hoy-sum').textContent = cobrosHoy.length ? `${cobrosHoy.length} cobros · ${PC.fmt(sumHoy)}` : '';
+
+    const cobrosEl = document.getElementById('cobros-hoy-lista');
+    if (!cobrosHoy.length) {
+      cobrosEl.innerHTML = '<div class="empty-state"><div class="e-icon">✅</div><p>Sin cobros programados hoy</p></div>';
+    } else {
+      cobrosEl.innerHTML = `<table><thead><tr><th>Cliente</th><th>Teléfono</th><th>Cuota</th><th>Monto</th><th>Acciones</th></tr></thead><tbody>
+        ${cobrosHoy.map(({p,c}) => {
+          const cl = PC.getCliente(p.clienteId);
+          return `<tr>
+            <td>${this.avatarEl(cl.nombre)} ${cl.nombre}</td>
+            <td style="color:var(--muted)">${cl.telefono||'—'}</td>
+            <td>Cuota ${c.num}/${p.numCuotas}</td>
+            <td class="td-amount green">${PC.fmt(c.monto)}</td>
+            <td>
+              <button class="btn btn-primary btn-sm" onclick="MODAL.abrirAbono(${p.id})">Cobrar</button>
+              <button class="btn btn-ghost btn-sm" onclick="UI.waRecordatorio(${p.clienteId},${p.id})">💬 WA</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody></table>`;
+    }
+
+    // Vencidos alert
+    const vencEl = document.getElementById('vencidos-lista');
+    const vencidosCuotas = [];
+    PC.state.prestamos.forEach(p => p.cuotas.forEach(c => {
+      if(!c.pagado && c.fecha < hoy) vencidosCuotas.push({p,c});
+    }));
+    if (!vencidosCuotas.length) { vencEl.innerHTML=''; return; }
+    vencEl.innerHTML = `<div class="alert-band">⚠️ ${vencidosCuotas.length} cuotas vencidas · ${PC.fmt(vencidosCuotas.reduce((a,x)=>a+x.c.monto,0))} pendientes</div>
+    <table><thead><tr><th>Cliente</th><th>Cuota</th><th>Venció</th><th>Días</th><th>Monto</th><th></th></tr></thead><tbody>
+      ${vencidosCuotas.slice(0,8).map(({p,c})=>{
+        const cl=PC.getCliente(p.clienteId);
+        const dias=PC.diffDays(hoy,c.fecha);
+        return `<tr>
+          <td>${this.avatarEl(cl.nombre)} ${cl.nombre}</td>
+          <td>Cuota ${c.num}</td>
+          <td style="color:var(--danger)">${c.fecha}</td>
+          <td><span class="badge badge-late">+${dias}d</span></td>
+          <td class="td-amount" style="color:var(--danger)">${PC.fmt(c.monto)}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="MODAL.abrirAbono(${p.id})">Cobrar</button>
+            <button class="btn btn-ghost btn-sm" onclick="UI.waAtrasado(${cl.id},${p.id})">⚠️ WA</button>
+          </td>
+        </tr>`;
+      }).join('')}
+    </tbody></table>`;
+  },
+  _setKPI(id, val, sub) {
+    const el = document.getElementById(id);
+    if(el) { el.querySelector('.kpi-val').textContent=val; el.querySelector('.kpi-sub').textContent=sub||''; }
+  },
+
+  // ────────────────────────────────────────────────────────
+  //  PRÉSTAMOS
+  // ────────────────────────────────────────────────────────
+  renderPrestamos() {
+    const q = (document.getElementById('search-prestamo')?.value||'').toLowerCase();
+    const est = document.getElementById('filter-estado')?.value||'';
+    let lista = PC.state.prestamos.filter(p => {
+      const cl = PC.getCliente(p.clienteId);
+      return (!q || cl.nombre.toLowerCase().includes(q)) && (!est || PC.estadoPrestamo(p)===est);
+    }).reverse();
+
+    const tbody = document.getElementById('tbody-prestamos');
+    const empty = document.getElementById('prestamos-empty');
+    if (!lista.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    tbody.innerHTML = lista.map(p => {
+      const cl = PC.getCliente(p.clienteId);
+      const est2 = PC.estadoPrestamo(p);
+      const prox = PC.proximaCuota(p);
+      const pag = PC.cuotasPagadas(p);
+      const pct = Math.round(pag/p.numCuotas*100);
+      const frecIcon = {semanal:'📅',quincenal:'🗓️',mensual:'📆'}[p.frecuencia]||'';
+      return `<tr class="tr-link" onclick="UI.abrirDetallePrestamo(${p.id})">
+        <td>${this.avatarEl(cl.nombre)} <span class="td-name">${cl.nombre}</span></td>
+        <td class="td-amount">${PC.fmt(p.monto)}</td>
+        <td>${p.tasa}%</td>
+        <td class="td-amount" style="color:var(--accent2)">${PC.fmt(PC.totalPrestamo(p))}</td>
+        <td>${frecIcon} ${p.numCuotas} ${p.frecuencia}</td>
+        <td>
+          <div style="font-size:0.82rem;margin-bottom:3px">${pag}/${p.numCuotas}</div>
+          <div class="progress-bar" style="width:90px"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </td>
+        <td style="font-size:0.82rem;color:${prox&&prox.fecha<PC.today()?'var(--danger)':'var(--muted)'}">${prox?prox.fecha:'—'}</td>
+        <td>${this.badge(est2)}</td>
+        <td onclick="event.stopPropagation()" style="white-space:nowrap">
+          ${est2!=='pagado'?`<button class="btn btn-primary btn-sm" onclick="MODAL.abrirAbono(${p.id})">Cobrar</button>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="MODAL.abrirDocsPrestamo(${p.id})">📄</button>
+          <button class="btn btn-danger btn-sm" onclick="UI.eliminarPrestamo(${p.id})">✕</button>
+        </td>
+      </tr>`;
+    }).join('');
+  },
+  eliminarPrestamo(id) {
+    if (!confirm('¿Eliminar este préstamo?')) return;
+    PC.state.prestamos = PC.state.prestamos.filter(p=>p.id!==id);
+    PC.saveState();
+    this.renderPrestamos();
+    this.toast('Préstamo eliminado','🗑️');
+  },
+
+  // ────────────────────────────────────────────────────────
+  //  CLIENTES
+  // ────────────────────────────────────────────────────────
+  renderClientes() {
+    const q = (document.getElementById('search-cliente')?.value||'').toLowerCase();
+    let lista = PC.state.clientes.filter(c => !q || c.nombre.toLowerCase().includes(q));
+    const el = document.getElementById('lista-clientes');
+    const empty = document.getElementById('clientes-empty');
+    if (!lista.length) { el.innerHTML=''; empty.style.display='block'; return; }
+    empty.style.display='none';
+    el.innerHTML = lista.map(c => {
+      const prestamos = PC.state.prestamos.filter(p=>p.clienteId===c.id);
+      const deuda = prestamos.filter(p=>PC.estadoPrestamo(p)!=='pagado').reduce((a,p)=>a+(PC.totalPrestamo(p)-PC.totalPagado(p)),0);
+      const activos = prestamos.filter(p=>PC.estadoPrestamo(p)==='activo').length;
+      const venc = prestamos.filter(p=>PC.estadoPrestamo(p)==='vencido').length;
+      const analisis = PC.analisisCredito(c.id);
+      const color = PC.avatarColor(c.nombre);
+      return `<div class="client-card" onclick="UI.abrirDetalleCliente(${c.id})">
+        <div class="client-avatar" style="background:${color}22;color:${color}">${PC.initials(c.nombre)}</div>
+        <div class="client-info">
+          <div class="client-name">${c.nombre}</div>
+          <div class="client-phone">📱 ${c.telefono||'—'} ${c.email?'· 📧 '+c.email:''}</div>
+          <div class="client-phone">📍 ${c.direccion||'—'}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          ${venc>0?`<span class="badge badge-late">${venc} vencido${venc>1?'s':''}</span>`:''}
+          ${this.badgeCredito(analisis.nivel)}
+        </div>
+        <div class="client-stats">
+          <div class="client-total">${PC.fmt(deuda)}</div>
+          <div class="client-count">${activos} activo${activos!==1?'s':''} · score ${analisis.score}</div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  // ────────────────────────────────────────────────────────
+  //  COBROS
+  // ────────────────────────────────────────────────────────
+  renderCobros() {
+    const hoy = PC.today();
+    const f = this.cobrosFiltro;
+    let items = [];
+    PC.state.prestamos.forEach(p => {
+      p.cuotas.forEach(c => {
+        if(c.pagado) return;
+        const dias = PC.diffDays(hoy, c.fecha);
+        if(f==='hoy'&&c.fecha===hoy) items.push({p,c,dias});
+        else if(f==='semana'&&c.fecha>=hoy&&c.fecha<=PC.addDays(hoy,7)) items.push({p,c,dias});
+        else if(f==='atrasados'&&c.fecha<hoy) items.push({p,c,dias});
+        else if(f==='pendientes'&&c.fecha<=PC.addDays(hoy,7)) items.push({p,c,dias});
+      });
+    });
+    items.sort((a,b)=>a.c.fecha.localeCompare(b.c.fecha));
+    const total = items.reduce((a,x)=>a+x.c.monto,0);
+    const el = document.getElementById('cobros-dia-tabla');
+    if(!items.length){el.innerHTML='<div class="empty-state"><div class="e-icon">🎉</div><p>No hay cobros en esta categoría</p></div>';return;}
+    el.innerHTML = `
+      <div class="cobros-summary">
+        <span>${items.length} cobros</span>
+        <span style="color:var(--accent);font-weight:700">${PC.fmt(total)}</span>
+        <button class="btn btn-ghost btn-sm" onclick="PCXLSX.exportarCobrosHoy()">📊 Exportar</button>
+        <button class="btn btn-ghost btn-sm" onclick="UI.pdfCobros()">📄 PDF Ruta</button>
+      </div>
+      <table><thead><tr><th>Cliente</th><th>Teléfono</th><th>Dirección</th><th>Cuota</th><th>Fecha</th><th>Monto</th><th>Días</th><th>Acciones</th></tr></thead><tbody>
+      ${items.map(({p,c,dias})=>{
+        const cl=PC.getCliente(p.clienteId);
+        const diasStr=dias===0?'<span style="color:var(--warn)">Hoy</span>':dias>0?`<span class="badge badge-late">+${dias}d</span>`:`<span style="color:var(--muted)">${Math.abs(dias)}d</span>`;
+        return `<tr>
+          <td>${this.avatarEl(cl.nombre)} ${cl.nombre}</td>
+          <td><a href="${PC.waLink(cl.telefono,'')}" target="_blank" style="color:var(--accent);text-decoration:none">📱 ${cl.telefono||'—'}</a></td>
+          <td style="color:var(--muted);font-size:0.82rem">${cl.direccion||'—'}</td>
+          <td>Cuota ${c.num}/${p.numCuotas}</td>
+          <td style="color:${c.fecha<hoy?'var(--danger)':'var(--muted)'}">${c.fecha}</td>
+          <td class="td-amount green">${PC.fmt(c.monto)}</td>
+          <td>${diasStr}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-primary btn-sm" onclick="MODAL.abrirAbono(${p.id})">Cobrar</button>
+            <button class="btn btn-ghost btn-sm" onclick="UI.waLink2(${cl.id},${p.id},'${c.fecha<hoy?'atrasado':'recordatorio'}')" title="WhatsApp">💬</button>
+          </td>
+        </tr>`;
+      }).join('')}
+      </tbody></table>`;
+  },
+  setCobrosFilter(f, el) {
+    this.cobrosFiltro = f;
+    document.querySelectorAll('.cobros-tabs .tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    this.renderCobros();
+  },
+
+  // ────────────────────────────────────────────────────────
+  //  COBRADOR VIEW
+  // ────────────────────────────────────────────────────────
+  renderCobrador() {
+    const hoy = PC.today();
+    let items = [];
+    PC.state.prestamos.forEach(p => {
+      p.cuotas.forEach(c => {
+        if(!c.pagado && c.fecha <= hoy) {
+          const cl = PC.getCliente(p.clienteId);
+          items.push({p,c,cl,dias:PC.diffDays(hoy,c.fecha)});
+        }
+      });
+    });
+    const total = items.reduce((a,x)=>a+x.c.monto,0);
+    const el = document.getElementById('cobrador-lista');
+    el.innerHTML = `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;text-align:center">
+        <div style="font-size:0.75rem;color:var(--muted)">TOTAL A COBRAR HOY</div>
+        <div style="font-family:var(--font-head);font-size:2rem;font-weight:800;color:var(--accent)">${PC.fmt(total)}</div>
+        <div style="color:var(--muted);font-size:0.85rem">${items.length} cobros pendientes</div>
+      </div>
+      ${items.map(({p,c,cl,dias},i)=>`
+        <div class="cobrador-card" id="cobrador-${p.id}-${c.num}">
+          <div class="cobrador-num">${i+1}</div>
+          <div class="cobrador-info">
+            <div class="cobrador-name">${cl.nombre}</div>
+            <div class="cobrador-addr">📍 ${cl.direccion||'Sin dirección'}</div>
+            <div class="cobrador-tel">📱 <a href="tel:${cl.telefono}" style="color:var(--accent)">${cl.telefono||'—'}</a></div>
+            ${dias>0?`<div style="color:var(--danger);font-size:0.8rem">⚠️ Vencida hace ${dias} días</div>`:''}
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-family:var(--font-head);font-size:1.2rem;font-weight:700;color:var(--accent2)">${PC.fmt(c.monto)}</div>
+            <div style="font-size:0.75rem;color:var(--muted)">Cuota ${c.num}/${p.numCuotas}</div>
+            <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+              <button class="btn btn-primary btn-sm" onclick="MODAL.abrirAbono(${p.id})">✅ Cobrar</button>
+              <a href="${PC.waLink(cl.telefono, PC.waMsgRecordatorio(cl.id,p.id))}" target="_blank" class="btn btn-ghost btn-sm">💬</a>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+      ${!items.length?'<div class="empty-state"><div class="e-icon">🏆</div><p>No hay cobros pendientes hoy</p></div>':''}
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button class="btn btn-ghost" style="flex:1" onclick="UI.pdfCobros()">📄 Imprimir Ruta</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="PCXLSX.exportarCobrosHoy()">📊 Exportar Excel</button>
+      </div>`;
+  },
+
+  // ────────────────────────────────────────────────────────
+  //  REPORTES
+  // ────────────────────────────────────────────────────────
+  renderReportes() {
+    const activos = PC.state.prestamos.filter(p=>PC.estadoPrestamo(p)==='activo');
+    const vencidos = PC.state.prestamos.filter(p=>PC.estadoPrestamo(p)==='vencido');
+    const pagados = PC.state.prestamos.filter(p=>PC.estadoPrestamo(p)==='pagado');
+    const totalCap = PC.state.prestamos.reduce((a,p)=>a+p.monto,0);
+    const totalCob = PC.state.prestamos.reduce((a,p)=>a+PC.totalPagado(p),0);
+    const totalPend = [...activos,...vencidos].reduce((a,p)=>a+(PC.totalPrestamo(p)-PC.totalPagado(p)),0);
+    const intereses = PC.state.prestamos.reduce((a,p)=>{
+      if(!PC.totalPrestamo(p)) return a;
+      return a+PC.totalPagado(p)*((PC.totalPrestamo(p)-p.monto)/PC.totalPrestamo(p));
+    },0);
+
+    // Top deudores
+    const porCliente = {};
+    PC.state.prestamos.forEach(p => {
+      const cl = PC.getCliente(p.clienteId);
+      if(!porCliente[cl.nombre]) porCliente[cl.nombre] = 0;
+      porCliente[cl.nombre] += PC.totalPrestamo(p)-PC.totalPagado(p);
+    });
+    const top = Object.entries(porCliente).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const maxV = top[0]?.[1]||1;
+    const colors = ['var(--accent)','var(--accent2)','var(--accent3)','var(--warn)','var(--danger)'];
+
+    document.getElementById('reporte-content').innerHTML = `
+    <div class="report-grid">
+      <div class="report-card">
+        <h4>💰 Resumen Financiero</h4>
+        <div class="metrics-2x2">
+          <div class="metric-box"><div class="metric-val" style="color:var(--accent)">${PC.fmt(totalCap)}</div><div class="metric-lbl">Capital prestado</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:var(--accent2)">${PC.fmt(totalPend)}</div><div class="metric-lbl">Por cobrar</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:var(--accent3)">${PC.fmt(intereses)}</div><div class="metric-lbl">Intereses cobrados</div></div>
+          <div class="metric-box"><div class="metric-val">${PC.state.clientes.length}</div><div class="metric-lbl">Clientes</div></div>
+        </div>
+      </div>
+      <div class="report-card">
+        <h4>📊 Estado de Préstamos</h4>
+        ${[['Activos',activos.length,'var(--accent)'],['Vencidos',vencidos.length,'var(--danger)'],['Pagados',pagados.length,'var(--accent3)']].map(([l,v,c])=>`
+          <div class="chart-bar-item">
+            <div class="chart-bar-label">${l}</div>
+            <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${PC.state.prestamos.length?Math.round(v/PC.state.prestamos.length*100):0}%;background:${c}"></div></div>
+            <div class="chart-bar-val">${v}</div>
+          </div>`).join('')}
+        <div style="text-align:center;margin-top:12px;font-family:var(--font-head);font-size:2rem;font-weight:800">${PC.state.prestamos.length}</div>
+        <div style="text-align:center;font-size:0.78rem;color:var(--muted)">Préstamos totales</div>
+      </div>
+      <div class="report-card" style="grid-column:1/-1">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h4 style="margin:0">👥 Top Deudores Activos</h4>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="PCXLSX.exportarBackupCompleto()">📊 Excel Completo</button>
+            <button class="btn btn-ghost btn-sm" onclick="PC.exportBackupJSON()">💾 Backup JSON</button>
+          </div>
+        </div>
+        ${top.length?top.map(([nombre,val],i)=>`
+          <div class="chart-bar-item">
+            <div class="chart-bar-label" style="width:120px">${nombre.split(' ')[0]} ${nombre.split(' ')[1]||''}</div>
+            <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${Math.round(val/maxV*100)}%;background:${colors[i]}"></div></div>
+            <div class="chart-bar-val">${PC.fmt(val)}</div>
+          </div>`).join(''):
+          '<p style="color:var(--muted);text-align:center;padding:20px">Sin datos suficientes</p>'}
+      </div>
+    </div>`;
+  },
+
+  // ────────────────────────────────────────────────────────
+  //  DETAIL PANELS
+  // ────────────────────────────────────────────────────────
+  abrirDetallePrestamo(id) {
+    const p = PC.getPrestamo(id);
+    const cl = PC.getCliente(p.clienteId);
+    const est = PC.estadoPrestamo(p);
+    const pag = PC.cuotasPagadas(p);
+    const tPag = PC.totalPagado(p);
+    const tTot = PC.totalPrestamo(p);
+    const pct = Math.round(pag/p.numCuotas*100);
+
+    document.getElementById('dp-title').textContent = cl.nombre;
+    document.getElementById('dp-content').innerHTML = `
+      <div class="detail-big">
+        <div class="amount">${PC.fmt(tTot-tPag)}</div>
+        <div class="label">Saldo pendiente · ${this.badge(est)}</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--muted);margin-bottom:16px"><span>${pag} pagadas</span><span>${pct}%</span></div>
+      <div class="dp-actions">
+        ${est!=='pagado'?`<button class="btn btn-primary" onclick="MODAL.abrirAbono(${p.id})">💵 Cobrar</button>`:'<div style="color:var(--accent);font-weight:600;text-align:center;padding:8px">✅ Liquidado</div>'}
+        <button class="btn btn-ghost" onclick="MODAL.abrirDocsPrestamo(${p.id})">📄 Docs</button>
+        <button class="btn btn-ghost" onclick="UI.waLink2(${cl.id},${p.id},'${est==='vencido'?'atrasado':'recordatorio'}')">💬 WA</button>
+      </div>
+      <div class="detail-info">
+        ${[['Capital',PC.fmt(p.monto)],['Interés',`${p.tasa}% (${p.tipoInteres})`],['Total a pagar',PC.fmt(tTot)],['Cuota',`${PC.fmt(tTot/p.numCuotas)} ${p.frecuencia}`],['Pagado',PC.fmt(tPag)],['Inicio',p.fechaInicio],['Notas',p.notas||'—']].map(([l,v],i)=>`<div class="detail-row"><span>${l}</span><span>${v}</span></div>`).join('')}
+      </div>
+      <div class="dp-section-title">Cuotas</div>
+      ${p.cuotas.map(c=>`
+        <div class="payment-item ${c.pagado?'paid':c.fecha<PC.today()?'overdue':''}">
+          <div><div>Cuota ${c.num}</div><div class="p-num">${c.fecha}</div></div>
+          <div style="text-align:right">
+            <div class="p-amount" style="color:${c.pagado?'var(--accent)':c.fecha<PC.today()?'var(--danger)':'var(--text)'}">${PC.fmt(c.monto)}</div>
+            <div class="p-num">${c.pagado?'✅ '+c.fechaPago:c.fecha<PC.today()?'⚠️ Vencida':'Pendiente'}</div>
+          </div>
+        </div>`).join('')}`;
+    this.openDetail();
+  },
+
+  abrirDetalleCliente(id) {
+    const c = PC.getCliente(id);
+    const prestamos = PC.state.prestamos.filter(p=>p.clienteId===id);
+    const analisis = PC.analisisCredito(id);
+    const color = PC.avatarColor(c.nombre);
+    const nivelColors = {excelente:'#00e5a0',bueno:'#1e90ff',regular:'#ffa502',riesgo:'#ff4757',nuevo:'#6b7494'};
+    const nc = nivelColors[analisis.nivel]||'#6b7494';
+
+    document.getElementById('dp-title').textContent = c.nombre;
+    document.getElementById('dp-content').innerHTML = `
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="width:64px;height:64px;border-radius:16px;background:${color}22;color:${color};display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;margin-bottom:8px">${PC.initials(c.nombre)}</div>
+      </div>
+      <div class="dp-actions" style="grid-template-columns:1fr 1fr">
+        <button class="btn btn-primary" onclick="UI.waLink2(${id},null,'recordatorio')">💬 WhatsApp</button>
+        <button class="btn btn-ghost" onclick="MODAL.abrirNuevoPrestamo(${id})">+ Préstamo</button>
+        <button class="btn btn-ghost" onclick="PCPDF.abrir(PCPDF.generarEstadoCuenta(${id}))">📄 PDF Estado</button>
+        <button class="btn btn-ghost" onclick="UI.eliminarCliente(${id})">🗑️ Eliminar</button>
+      </div>
+      <!-- Score crediticio -->
+      <div style="background:${nc}15;border:1px solid ${nc}44;border-radius:12px;padding:14px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:48px;height:48px;border-radius:12px;background:${nc};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;color:#0d0f14">${analisis.score}</div>
+          <div>
+            <div style="font-weight:600;color:${nc}">Crédito ${analisis.nivel}</div>
+            <div style="font-size:0.78rem;color:var(--muted)">${analisis.resumen}</div>
+            <div style="font-size:0.8rem;margin-top:2px">Disponible: <b style="color:${nc}">${PC.fmt(analisis.recomendacion)}</b></div>
+          </div>
+        </div>
+        ${analisis.recomendacion>0?`<button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="UI.waLink2(${id},null,'disponible',${analisis.recomendacion})">💬 Ofrecer crédito vía WA</button>`:''}
+      </div>
+      <div class="detail-info">
+        ${[['Teléfono',c.telefono||'—'],['Teléfono 2',c.telefono2||'—'],['Email',c.email||'—'],['Dirección',c.direccion||'—'],['Referencia',c.referencia||'—'],['Ocupación',c.ocupacion||'—'],['Cliente desde',c.creado]].map(([l,v])=>`<div class="detail-row"><span>${l}</span><span style="max-width:60%;text-align:right;font-size:0.85rem">${v}</span></div>`).join('')}
+      </div>
+      ${c.documentos?.length?`<div class="dp-section-title">Documentos (${c.documentos.length})</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+          ${c.documentos.map(d=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:0.8rem">
+            <div>📎 ${d.nombre}</div><div style="color:var(--muted)">${d.fecha}</div>
+          </div>`).join('')}
+        </div>`:''}
+      <div class="dp-section-title">Préstamos (${prestamos.length})</div>
+      ${prestamos.map(p=>`
+        <div class="payment-item ${PC.estadoPrestamo(p)==='vencido'?'overdue':PC.estadoPrestamo(p)==='pagado'?'paid':''}" onclick="UI.abrirDetallePrestamo(${p.id})" style="cursor:pointer">
+          <div><div>${PC.fmt(p.monto)} · ${p.tasa}%</div><div class="p-num">${p.fechaInicio}</div></div>
+          <div>${this.badge(PC.estadoPrestamo(p))}</div>
+        </div>`).join('')}`;
+    this.openDetail();
+  },
+
+  openDetail() { document.getElementById('detail-panel').classList.add('show'); },
+  closeDetail() { document.getElementById('detail-panel').classList.remove('show'); },
+
+  eliminarCliente(id) {
+    if(!confirm('¿Eliminar cliente y todos sus préstamos?')) return;
+    PC.state.clientes = PC.state.clientes.filter(c=>c.id!==id);
+    PC.state.prestamos = PC.state.prestamos.filter(p=>p.clienteId!==id);
+    PC.saveState();
+    this.closeDetail();
+    this.renderClientes();
+    this.toast('Cliente eliminado','🗑️');
+  },
+
+  // ────────────────────────────────────────────────────────
+  //  WHATSAPP HELPERS
+  // ────────────────────────────────────────────────────────
+  waLink2(clienteId, prestamoId, tipo, extra) {
+    const cl = PC.getCliente(clienteId);
+    const tel = cl.telefono;
+    if(!tel) { this.toast('Este cliente no tiene teléfono','⚠️'); return; }
+    let msg;
+    if(tipo==='recordatorio' && prestamoId) msg = PC.waMsgRecordatorio(clienteId, prestamoId);
+    else if(tipo==='atrasado' && prestamoId) msg = PC.waMsgAtrasado(clienteId, prestamoId);
+    else if(tipo==='puntual') msg = PC.waMsgPuntual(clienteId, extra||0);
+    else if(tipo==='disponible') msg = PC.waMsgPrestamoDisponible(clienteId, extra||0);
+    else msg = `Hola ${cl.nombre.split(' ')[0]}, te contacta ${PC.config.prestamistaNombre||'PrestamoControl'}.`;
+    window.open(PC.waLink(tel, msg), '_blank');
+  },
+  waRecordatorio(cId,pId){this.waLink2(cId,pId,'recordatorio');},
+  waAtrasado(cId,pId){this.waLink2(cId,pId,'atrasado');},
+
+  // ── PDF SHORTCUTS ─────────────────────────────────────────
+  pdfCobros() {
+    const doc = PCPDF.generarReporteCobros();
+    PCPDF.abrir(doc);
+  },
+};
+
+// ============================================================
+//  PRESTAMOCONTROL - MODAL SYSTEM
+// ============================================================
+
+const MODAL = {
+  _active: null,
+  _abonoPrestamoId: null,
+  _nuevoPrestamoClienteId: null,
+  _docsPrestamoId: null,
+
+  open(id) {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
+    const m = document.getElementById(id);
+    if (m) { m.classList.add('show'); this._active = id; }
+  },
+  close(id) {
+    const m = document.getElementById(id || this._active);
+    if (m) m.classList.remove('show');
+  },
+  closeAll() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); },
+
+  // ── NUEVO CLIENTE ─────────────────────────────────────────
+  abrirNuevoCliente() {
+    ['c-nombre','c-tel','c-tel2','c-email','c-dir','c-ref','c-ocup','c-notas'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value='';
+    });
+    this.open('modal-nuevo-cliente');
+  },
+  guardarCliente() {
+    const nombre = document.getElementById('c-nombre').value.trim();
+    if(!nombre) { UI.toast('Ingresa el nombre del cliente','⚠️'); return; }
+    const cliente = {
+      id: PC.state.nextClienteId++,
+      nombre,
+      telefono: document.getElementById('c-tel').value.trim(),
+      telefono2: document.getElementById('c-tel2').value.trim(),
+      email: document.getElementById('c-email').value.trim(),
+      direccion: document.getElementById('c-dir').value.trim(),
+      referencia: document.getElementById('c-ref').value.trim(),
+      ocupacion: document.getElementById('c-ocup').value.trim(),
+      notas: document.getElementById('c-notas').value.trim(),
+      documentos: [],
+      creado: PC.today(),
+    };
+    PC.state.clientes.push(cliente);
+    PC.saveState();
+    this.close('modal-nuevo-cliente');
+    UI.toast(`Cliente ${nombre} registrado 👤`);
+    UI.renderClientes();
+    this._refreshClienteSelect();
+  },
+
+  // ── NUEVO PRÉSTAMO ────────────────────────────────────────
+  abrirNuevoPrestamo(clienteId) {
+    this._nuevoPrestamoClienteId = clienteId || null;
+    this._refreshClienteSelect();
+    document.getElementById('f-fecha').value = PC.today();
+    document.getElementById('f-tasa').value = PC.config.tasaDefecto;
+    document.getElementById('f-cuotas').value = PC.config.cuotasDefecto;
+    document.getElementById('f-frecuencia').value = PC.config.frecuenciaDefecto;
+    document.getElementById('f-tipo-interes').value = PC.config.tipoInteresDefecto;
+    document.getElementById('f-monto').value = '';
+    document.getElementById('f-notas').value = '';
+    document.getElementById('prestamo-preview').style.display = 'none';
+    if(clienteId) document.getElementById('f-cliente').value = clienteId;
+    this.open('modal-nuevo-prestamo');
+  },
+  guardarPrestamo() {
+    const clienteId = parseInt(document.getElementById('f-cliente').value);
+    const monto = parseFloat(document.getElementById('f-monto').value);
+    const tasa = parseFloat(document.getElementById('f-tasa').value);
+    const numCuotas = parseInt(document.getElementById('f-cuotas').value);
+    const frecuencia = document.getElementById('f-frecuencia').value;
+    const fecha = document.getElementById('f-fecha').value;
+    const tipoInteres = document.getElementById('f-tipo-interes').value;
+    if(!clienteId||!monto||!tasa||!numCuotas||!fecha) { UI.toast('Completa todos los campos requeridos','⚠️'); return; }
+    const cuotas = PC.generarCuotas(monto, tasa, numCuotas, frecuencia, fecha, tipoInteres);
+    const prestamo = {
+      id: PC.state.nextPrestamoId++,
+      clienteId, monto, tasa, numCuotas, frecuencia, fechaInicio: fecha,
+      tipoInteres, notas: document.getElementById('f-notas').value.trim(),
+      cuotas, estado: 'activo', creado: PC.today(),
+    };
+    PC.state.prestamos.push(prestamo);
+    PC.saveState();
+    this.close('modal-nuevo-prestamo');
+    UI.toast('Préstamo registrado exitosamente 🎉');
+    UI.renderDashboard();
+    if(UI.currentView==='prestamos') UI.renderPrestamos();
+    if(UI.currentView==='clientes') UI.renderClientes();
+  },
+  calcPreview() {
+    const monto = parseFloat(document.getElementById('f-monto')?.value)||0;
+    const tasa = parseFloat(document.getElementById('f-tasa')?.value)||0;
+    const cuotas = parseInt(document.getElementById('f-cuotas')?.value)||1;
+    const tipo = document.getElementById('f-tipo-interes')?.value;
+    if(!monto) { document.getElementById('prestamo-preview').style.display='none'; return; }
+    let total = tipo==='flat' ? monto*(1+tasa/100) : monto*(1+(tasa/100)*cuotas);
+    document.getElementById('prev-total').textContent = PC.fmt(total);
+    document.getElementById('prev-cuota').textContent = PC.fmt(total/cuotas);
+    document.getElementById('prev-interes').textContent = PC.fmt(total-monto);
+    document.getElementById('prev-roi').textContent = (tasa).toFixed(1)+'%';
+    document.getElementById('prestamo-preview').style.display='block';
+  },
+
+  // ── ABONO ─────────────────────────────────────────────────
+  abrirAbono(prestamoId) {
+    this._abonoPrestamoId = prestamoId;
+    const p = PC.getPrestamo(prestamoId);
+    const cl = PC.getCliente(p.clienteId);
+    const proxima = PC.proximaCuota(p);
+    const pagadas = PC.cuotasPagadas(p);
+    document.getElementById('abono-info').innerHTML = `
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:8px">${cl.nombre}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.83rem">
+          <div style="color:var(--muted)">Cuotas pagadas<br><b style="color:var(--accent);font-size:1rem">${pagadas}/${p.numCuotas}</b></div>
+          <div style="color:var(--muted)">Cuota esperada<br><b style="color:var(--accent2);font-size:1rem">${proxima?PC.fmt(proxima.monto):'Completado'}</b></div>
+          <div style="color:var(--muted)">Fecha esperada<br><b style="color:${proxima&&proxima.fecha<PC.today()?'var(--danger)':'var(--text)'}">${proxima?.fecha||'—'}</b></div>
+          <div style="color:var(--muted)">Saldo pendiente<br><b>${PC.fmt(PC.totalPrestamo(p)-PC.totalPagado(p))}</b></div>
+        </div>
+      </div>`;
+    document.getElementById('abono-fecha').value = PC.today();
+    if(proxima) document.getElementById('abono-monto').value = proxima.monto.toFixed(2);
+    document.getElementById('abono-nota').value = '';
+    this.open('modal-abono');
+  },
+  registrarAbono() {
+    const p = PC.getPrestamo(this._abonoPrestamoId);
+    const monto = parseFloat(document.getElementById('abono-monto').value);
+    const fecha = document.getElementById('abono-fecha').value;
+    const nota = document.getElementById('abono-nota').value.trim();
+    const proxima = PC.proximaCuota(p);
+    if(!proxima) { UI.toast('Este préstamo ya está liquidado','⚠️'); return; }
+    if(!monto) { UI.toast('Ingresa el monto del abono','⚠️'); return; }
+    proxima.pagado = true;
+    proxima.fechaPago = fecha;
+    proxima.montoPagado = monto;
+    proxima.notaPago = nota;
+    p.estado = PC.estadoPrestamo(p);
+    // Log pago
+    PC.state.pagos.push({ id: PC.state.nextPagoId++, prestamoId: p.id, clienteId: p.clienteId, cuotaNum: proxima.num, monto, fecha, nota });
+    PC.saveState();
+    this.close('modal-abono');
+    UI.toast('Pago registrado ✅');
+    // Ofrecer comprobante
+    if(confirm('¿Generar comprobante de pago?')) {
+      PCPDF.abrir(PCPDF.generarComprobante(p.id, proxima.num));
+    }
+    // Ofrecer WA pago puntual
+    const cl = PC.getCliente(p.clienteId);
+    if(cl.telefono && confirm(`¿Enviar confirmación por WhatsApp a ${cl.nombre}?`)) {
+      window.open(PC.waLink(cl.telefono, PC.waMsgPuntual(p.clienteId, monto)), '_blank');
+    }
+    UI.renderDashboard();
+    if(UI.currentView==='prestamos') UI.renderPrestamos();
+    if(UI.currentView==='cobros') UI.renderCobros();
+    if(UI.currentView==='cobrador') UI.renderCobrador();
+  },
+
+  // ── DOCUMENTOS PRÉSTAMO ───────────────────────────────────
+  abrirDocsPrestamo(prestamoId) {
+    this._docsPrestamoId = prestamoId;
+    const p = PC.getPrestamo(prestamoId);
+    const cl = PC.getCliente(p.clienteId);
+    document.getElementById('docs-info').innerHTML = `
+      <div style="font-weight:600;margin-bottom:4px">${cl.nombre} · Préstamo #${p.id}</div>
+      <div style="font-size:0.83rem;color:var(--muted)">${PC.fmt(p.monto)} · ${p.tasa}% · ${p.numCuotas} cuotas ${p.frecuencia}s</div>`;
+    this.open('modal-docs');
+  },
+  generarDoc(tipo) {
+    const id = this._docsPrestamoId;
+    let doc;
+    if(tipo==='pagare') doc = PCPDF.generarPagare(id);
+    else if(tipo==='contrato') doc = PCPDF.generarContrato(id);
+    else if(tipo==='comprobante') {
+      const p = PC.getPrestamo(id);
+      const ult = [...p.cuotas].reverse().find(c=>c.pagado);
+      if(!ult) { UI.toast('No hay pagos registrados aún','⚠️'); return; }
+      doc = PCPDF.generarComprobante(id, ult.num);
+    }
+    if(doc) PCPDF.abrir(doc);
+  },
+  descargarDoc(tipo) {
+    const id = this._docsPrestamoId;
+    const p = PC.getPrestamo(id);
+    const cl = PC.getCliente(p.clienteId);
+    let doc, nombre;
+    if(tipo==='pagare') { doc=PCPDF.generarPagare(id); nombre=`Pagare_${cl.nombre}_${id}`; }
+    else if(tipo==='contrato') { doc=PCPDF.generarContrato(id); nombre=`Contrato_${cl.nombre}_${id}`; }
+    if(doc) PCPDF.descargar(doc, nombre);
+  },
+
+  // ── CONFIGURACIÓN ─────────────────────────────────────────
+  abrirConfig() {
+    this.open('modal-config');
+    initConfigModal();
+  },
+  guardarConfig() {
+    // Negocio
+    PC.config.prestamistaNombre = document.getElementById('cfg-nombre').value.trim()||'PrestamoControl';
+    PC.config.prestamistaRFC = document.getElementById('cfg-rfc').value.trim();
+    PC.config.prestamistaDir = document.getElementById('cfg-dir').value.trim();
+    PC.config.prestamistaTel = document.getElementById('cfg-tel').value.trim();
+    PC.config.prestamistaEmail = document.getElementById('cfg-email').value.trim();
+    // Financiero
+    PC.config.tasaDefecto = parseFloat(document.getElementById('cfg-tasa').value)||10;
+    PC.config.cuotasDefecto = parseInt(document.getElementById('cfg-cuotas').value)||12;
+    PC.config.moraPorc = parseFloat(document.getElementById('cfg-mora').value)||5;
+    PC.config.diasGracia = parseInt(document.getElementById('cfg-dias-gracia').value)||3;
+    const fd = document.getElementById('cfg-frecuencia-def');
+    if(fd) PC.config.frecuenciaDefecto = fd.value;
+    const tid = document.getElementById('cfg-tipo-interes-def');
+    if(tid) PC.config.tipoInteresDefecto = tid.value;
+    // Apariencia
+    PC.config.tema = document.getElementById('cfg-tema').value;
+    PC.config.tamanoFuente = document.getElementById('cfg-fuente').value;
+    PC.config.colorAcento = document.getElementById('cfg-acento').value;
+    // Seguridad
+    PC.config.pinEnabled = document.getElementById('cfg-pin-enabled').checked;
+    PC.config.pinTimeout = parseInt(document.getElementById('cfg-pin-timeout').value)||15;
+    const newPin = document.getElementById('cfg-pin-new').value;
+    const confirmPin = document.getElementById('cfg-pin-confirm').value;
+    if(newPin.length>=4) {
+      if(newPin !== confirmPin) { UI.toast('Los PINs no coinciden','⚠️'); return; }
+      PC.setPin(newPin);
+      UI.toast('PIN actualizado 🔐');
+    }
+    // Backup
+    PC.config.backupFrecuencia = document.getElementById('cfg-backup-freq').value;
+    PC.config.backupAuto = document.getElementById('cfg-backup-auto').checked;
+    // Notif
+    PC.config.recordatoriosDias = parseInt(document.getElementById('cfg-recordatorio-dias').value)||1;
+    PC.saveConfig();
+    PC.applyTheme();
+    PC.applyFontSize();
+    UI.updateSidebar();
+    this.close('modal-config');
+    UI.toast('Configuración guardada ✅');
+  },
+
+  // ── AYUDA ─────────────────────────────────────────────────
+  abrirAyuda() { this.open('modal-ayuda'); },
+
+  // ── IMPORT BACKUP ─────────────────────────────────────────
+  importarBackup() {
+    const file = document.getElementById('import-file')?.files?.[0];
+    if(!file) { UI.toast('Selecciona un archivo','⚠️'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const ok = PC.importBackupJSON(e.target.result);
+      if(ok) {
+        UI.toast('Backup restaurado correctamente ✅');
+        this.close('modal-config');
+        UI.showView('dashboard');
+      } else {
+        UI.toast('Error: archivo inválido','❌');
+      }
+    };
+    reader.readAsText(file);
+  },
+
+  // ── SUBIR DOCUMENTO CLIENTE ───────────────────────────────
+  subirDocCliente(clienteId, file) {
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const cl = PC.state.clientes.find(c=>c.id===clienteId);
+      if(!cl.documentos) cl.documentos=[];
+      cl.documentos.push({ nombre: file.name, tipo: file.type, fecha: PC.today(), data: e.target.result });
+      PC.saveState();
+      UI.toast('Documento guardado 📎');
+    };
+    reader.readAsDataURL(file);
+  },
+
+  // ── PRIVATE ───────────────────────────────────────────────
+  _refreshClienteSelect() {
+    const sel = document.getElementById('f-cliente');
+    if(!sel) return;
+    sel.innerHTML = '<option value="">— Seleccionar cliente —</option>';
+    PC.state.clientes.forEach(c => {
+      sel.innerHTML += `<option value="${c.id}">${c.nombre}</option>`;
+    });
+  },
+};
+
+// Close modal on overlay click
+document.addEventListener('click', e => {
+  if(e.target.classList.contains('modal-overlay')) MODAL.closeAll();
+});
+
+</script>
+
+<script>
+
+// ══════════════════════════════════════════════════
+//  CONFIG UI HELPERS
+// ══════════════════════════════════════════════════
+
+function previewTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('cfg-tema').value = theme;
+  // Update border highlight on theme cards
+  document.querySelectorAll('.theme-option').forEach(el => {
+    el.style.borderColor = el.id === 'theme-'+theme ? 'var(--accent)' : 'var(--border)';
+    el.style.boxShadow = el.id === 'theme-'+theme ? '0 0 0 2px var(--accent)' : 'none';
+  });
+}
+
+function previewFont(size, el) {
+  const sizes = { small:'13px', normal:'15px', large:'17px', xlarge:'20px' };
+  document.documentElement.style.setProperty('--base-font', sizes[size]);
+  document.getElementById('cfg-fuente').value = size;
+  document.querySelectorAll('.font-option').forEach(e => {
+    e.style.borderColor = e.dataset.size === size ? 'var(--accent)' : 'var(--border)';
+    e.style.background = e.dataset.size === size ? 'var(--accent-dim)' : 'var(--surface2)';
+  });
+}
+
+function previewColor(color, el) {
+  document.documentElement.style.setProperty('--accent', color);
+  document.documentElement.style.setProperty('--accent-dim', color+'22');
+  document.getElementById('cfg-acento').value = color;
+  document.querySelectorAll('.color-preset').forEach(e => {
+    e.style.border = e.dataset.color === color ? '3px solid white' : '2px solid transparent';
+    e.style.transform = e.dataset.color === color ? 'scale(1.15)' : 'scale(1)';
+  });
+}
+
+function agregarTasaRapida() {
+  const val = parseFloat(document.getElementById('nueva-tasa-rapida').value);
+  if (!val || val <= 0) return;
+  if (!PC.config.tasasRapidas) PC.config.tasasRapidas = [];
+  if (!PC.config.tasasRapidas.includes(val)) {
+    PC.config.tasasRapidas.push(val);
+    PC.saveConfig();
+    renderTasasRapidas();
+  }
+  document.getElementById('nueva-tasa-rapida').value = '';
+}
+
+function renderTasasRapidas() {
+  const el = document.getElementById('tasas-rapidas-list');
+  if (!el) return;
+  const tasas = PC.config.tasasRapidas || [5, 10, 15, 20];
+  el.innerHTML = tasas.map(t => `
+    <div style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:0.83rem">
+      <span style="color:var(--accent);font-weight:600">${t}%</span>
+      <span style="color:var(--muted);cursor:pointer" onclick="eliminarTasaRapida(${t})">✕</span>
+    </div>`).join('');
+}
+
+function eliminarTasaRapida(val) {
+  PC.config.tasasRapidas = (PC.config.tasasRapidas||[]).filter(t=>t!==val);
+  PC.saveConfig();
+  renderTasasRapidas();
+}
+
+function initConfigModal() {
+  const cfg = PC.config;
+  // Negocio
+  document.getElementById('cfg-nombre').value = cfg.prestamistaNombre||'';
+  document.getElementById('cfg-rfc').value = cfg.prestamistaRFC||'';
+  document.getElementById('cfg-dir').value = cfg.prestamistaDir||'';
+  document.getElementById('cfg-tel').value = cfg.prestamistaTel||'';
+  document.getElementById('cfg-email').value = cfg.prestamistaEmail||'';
+  // Financiero
+  document.getElementById('cfg-tasa').value = cfg.tasaDefecto||10;
+  document.getElementById('cfg-cuotas').value = cfg.cuotasDefecto||12;
+  document.getElementById('cfg-mora').value = cfg.moraPorc||5;
+  document.getElementById('cfg-dias-gracia').value = cfg.diasGracia||3;
+  const fd = document.getElementById('cfg-frecuencia-def');
+  if(fd) fd.value = cfg.frecuenciaDefecto||'mensual';
+  const tid = document.getElementById('cfg-tipo-interes-def');
+  if(tid) tid.value = cfg.tipoInteresDefecto||'flat';
+  // Seguridad
+  document.getElementById('cfg-pin-enabled').checked = cfg.pinEnabled||false;
+  document.getElementById('cfg-pin-timeout').value = cfg.pinTimeout||15;
+  document.getElementById('cfg-pin-new').value = '';
+  document.getElementById('cfg-pin-confirm').value = '';
+  // Backup
+  document.getElementById('cfg-backup-freq').value = cfg.backupFrecuencia||'diario';
+  document.getElementById('cfg-backup-auto').checked = cfg.backupAuto!==false;
+  const ub = document.getElementById('ultimo-backup-fecha');
+  if(ub) ub.textContent = cfg.ultimoBackup ? new Date(cfg.ultimoBackup).toLocaleString('es-MX') : 'Nunca';
+  // Notif
+  document.getElementById('cfg-recordatorio-dias').value = cfg.recordatoriosDias||1;
+  // Apariencia — init visual selectors
+  setTimeout(() => {
+    previewTheme(cfg.tema||'dark');
+    const sizes = {small:0,normal:1,large:2,xlarge:3};
+    const fontSize = cfg.tamanoFuente||'normal';
+    document.querySelectorAll('.font-option').forEach((el,i) => {
+      el.style.borderColor = el.dataset.size===fontSize ? 'var(--accent)' : 'var(--border)';
+      el.style.background = el.dataset.size===fontSize ? 'var(--accent-dim)' : '';
+    });
+    document.getElementById('cfg-fuente').value = fontSize;
+    previewColor(cfg.colorAcento||'#00e5a0', null);
+    renderTasasRapidas();
+  }, 50);
+}
+
+
+function triggerInstall() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+  } else if (window.matchMedia('(display-mode: standalone)').matches) {
+    UI.toast('PrestamoControl ya está instalado 📱', '✅');
+  } else {
+    UI.toast('Para instalar: menú ⋮ del navegador → "Agregar a inicio"', '📱');
+  }
+}
+function checkPWAStatus() {
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const swActive = 'serviceWorker' in navigator;
+  const online = navigator.onLine;
+  UI.toast(
+    (standalone ? '✅ Instalada' : '⚠️ No instalada') + ' · ' +
+    (swActive ? '✅ Offline OK' : '❌ Sin SW') + ' · ' +
+    (online ? '🌐 Online' : '📡 Offline'),
+    standalone ? '📱' : '⚠️'
+  );
+}
+
+// ══════════════════════════════════════════════════
+//  GLOBAL HELPERS & INIT
+// ══════════════════════════════════════════════════
+
+// Config tabs
+function switchConfigTab(name, el) {
+  document.querySelectorAll('.config-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.config-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('cfgp-'+name).classList.add('active');
+}
+
+// Help nav
+function showHelp(name, el) {
+  document.querySelectorAll('.help-nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.help-section').forEach(s=>s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('help-'+name).classList.add('active');
+}
+
+// PIN system
+let pinBuffer = '';
+function pinKey(k) {
+  if(pinBuffer.length>=4) return;
+  pinBuffer += k;
+  for(let i=0;i<4;i++) document.getElementById('pd-'+i).classList.toggle('filled', i<pinBuffer.length);
+  if(pinBuffer.length===4) {
+    if(PC.unlock(pinBuffer)) {
+      document.getElementById('pin-screen').style.display='none';
+      document.getElementById('pin-error').textContent='';
+    } else {
+      document.getElementById('pin-error').textContent='PIN incorrecto. Intenta de nuevo.';
+      pinBuffer='';
+      for(let i=0;i<4;i++) document.getElementById('pd-'+i).classList.remove('filled');
+    }
+  }
+}
+function pinDel() {
+  pinBuffer=pinBuffer.slice(0,-1);
+  for(let i=0;i<4;i++) document.getElementById('pd-'+i).classList.toggle('filled', i<pinBuffer.length);
+}
+
+// ── BOOT ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  PC.init();
+  PC.cargarDemo();
+
+  // PIN check
+  if(PC.config.pinEnabled && !PC.checkSession()) {
+    document.getElementById('pin-screen').style.display='flex';
+  }
+
+  UI.init();
+
+
+  // ══════════════════════════════════════════════════
+  //  PWA — SERVICE WORKER + INSTALL PROMPT
+  // ══════════════════════════════════════════════════
+
+  // Handle URL params for shortcuts
+  const urlParams = new URLSearchParams(window.location.search);
+  const viewParam = urlParams.get('view');
+  const actionParam = urlParams.get('action');
+  if (viewParam) setTimeout(() => UI.showView(viewParam), 100);
+  if (actionParam === 'nuevo-prestamo') setTimeout(() => MODAL.abrirNuevoPrestamo(), 300);
+
+  // Service Worker registration
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+        console.log('[PWA] SW registered:', reg.scope);
+
+        // Listen for SW updates
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateBanner(reg);
+            }
+          });
+        });
+
+        // Listen for messages from SW
+        navigator.serviceWorker.addEventListener('message', event => {
+          if (event.data?.type === 'NAVIGATE') UI.showView(event.data.view);
+          if (event.data?.type === 'SYNC_READY') PC.exportBackupJSON(true);
+        });
+
+        // Get SW version
+        const channel = new MessageChannel();
+        channel.port1.onmessage = e => console.log('[PWA] SW version:', e.data.version);
+        reg.active?.postMessage({ type: 'GET_VERSION' }, [channel.port2]);
+
+      } catch (err) {
+        console.log('[PWA] SW registration failed:', err);
+      }
+    });
+  }
+
+  // ── INSTALL PROMPT (A2HS) ──────────────────────────
+  let deferredInstallPrompt = null;
+  const installBanner = document.getElementById('pwa-install-banner');
+  const installBtn = document.getElementById('pwa-install-btn');
+  const installDismiss = document.getElementById('pwa-install-dismiss');
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    // Only show if not already installed and not dismissed recently
+    const dismissed = localStorage.getItem('pwa_install_dismissed');
+    const dayAgo = Date.now() - 86400000;
+    if (!dismissed || parseInt(dismissed) < dayAgo) {
+      setTimeout(() => { if(installBanner) installBanner.classList.add('show'); }, 2000);
+    }
+  });
+
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) return;
+      installBanner.classList.remove('show');
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      console.log('[PWA] Install outcome:', outcome);
+      if (outcome === 'accepted') UI.toast('¡App instalada! Búscala en tu pantalla de inicio 📱', '🎉');
+      deferredInstallPrompt = null;
+    });
+  }
+
+  if (installDismiss) {
+    installDismiss.addEventListener('click', () => {
+      installBanner.classList.remove('show');
+      localStorage.setItem('pwa_install_dismissed', Date.now().toString());
+    });
+  }
+
+  // Detect if already installed (standalone mode)
+  if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+    console.log('[PWA] Running as installed app');
+    document.body.classList.add('pwa-standalone');
+  }
+
+  window.addEventListener('appinstalled', () => {
+    UI.toast('PrestamoControl instalado exitosamente 🎉', '📱');
+    if(installBanner) installBanner.classList.remove('show');
+    deferredInstallPrompt = null;
+  });
+
+  // ── UPDATE BANNER ─────────────────────────────────
+  function showUpdateBanner(reg) {
+    const banner = document.getElementById('pwa-update-banner');
+    const updateBtn = document.getElementById('pwa-update-btn');
+    if (banner) banner.classList.add('show');
+    if (updateBtn) {
+      updateBtn.addEventListener('click', () => {
+        reg.waiting?.postMessage({ type: 'SKIP_WAITING' });
+        banner.classList.remove('show');
+        window.location.reload();
+      });
+    }
+  }
+
+  // ── ONLINE/OFFLINE STATUS ─────────────────────────
+  const offlineBadge = document.getElementById('offline-badge');
+  function updateOnlineStatus() {
+    if (offlineBadge) {
+      offlineBadge.style.display = navigator.onLine ? 'none' : 'flex';
+    }
+  }
+  window.addEventListener('online',  updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  // ── REQUEST NOTIFICATIONS ─────────────────────────
+  setTimeout(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      // Only ask after 30 seconds of use
+      setTimeout(() => PC.scheduleReminders(), 30000);
+    }
+  }, 5000);
+
+});
+</script>
+
+<!-- ══════════════════════════════════════════════════
+  PWA UI ELEMENTS
+══════════════════════════════════════════════════ -->
+
+<!-- Install Banner -->
+<div id="pwa-install-banner" class="pwa-banner pwa-install">
+  <div class="pwa-banner-icon">📱</div>
+  <div class="pwa-banner-text">
+    <div class="pwa-banner-title">Instalar PrestamoControl</div>
+    <div class="pwa-banner-sub">Accede desde tu pantalla de inicio, funciona sin internet</div>
+  </div>
+  <button id="pwa-install-btn" class="btn btn-primary btn-sm">Instalar</button>
+  <button id="pwa-install-dismiss" class="pwa-banner-close">✕</button>
+</div>
+
+<!-- Update Banner -->
+<div id="pwa-update-banner" class="pwa-banner pwa-update">
+  <div class="pwa-banner-icon">🔄</div>
+  <div class="pwa-banner-text">
+    <div class="pwa-banner-title">Nueva versión disponible</div>
+    <div class="pwa-banner-sub">Actualiza para obtener las últimas mejoras</div>
+  </div>
+  <button id="pwa-update-btn" class="btn btn-primary btn-sm">Actualizar</button>
+</div>
+
+<!-- Offline Badge -->
+<div id="offline-badge" style="display:none;position:fixed;top:12px;right:12px;background:rgba(255,165,2,0.15);border:1px solid rgba(255,165,2,0.4);color:var(--warn);padding:6px 12px;border-radius:20px;font-size:0.78rem;font-weight:500;z-index:500;gap:6px;align-items:center">
+  <span>📡</span> Sin conexión — modo offline
+</div>
+
+<style>
+/* PWA Banners */
+.pwa-banner {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-top: 2px solid var(--border);
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 12px;
+  z-index: 800;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+}
+.pwa-banner.show { transform: translateY(0); }
+.pwa-install { border-top-color: var(--accent); }
+.pwa-update  { border-top-color: var(--accent3); }
+.pwa-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
+.pwa-banner-text { flex: 1; }
+.pwa-banner-title { font-weight: 600; font-size: 0.9rem; }
+.pwa-banner-sub   { font-size: 0.76rem; color: var(--muted); margin-top: 2px; }
+.pwa-banner-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; padding: 4px 8px; border-radius: 4px; }
+.pwa-banner-close:hover { color: var(--text); }
+
+/* Standalone mode tweaks */
+.pwa-standalone .sidebar { padding-top: env(safe-area-inset-top, 0); }
+.pwa-standalone .main { padding-bottom: env(safe-area-inset-bottom, 20px); }
+</style>
+
+</body>
+</html>
