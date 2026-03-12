@@ -2,7 +2,7 @@
 <html lang="es" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <meta name="theme-color" content="#0d0f14">
 <title>PrestamoControl · v2.0</title>
 
@@ -179,7 +179,7 @@ body {
 /* ══════════════════════════════════════════════════
    MAIN
 ══════════════════════════════════════════════════ */
-.main { margin-left: var(--sidebar-w); padding: 28px 32px; min-height: 100vh; }
+.main { margin-left: var(--sidebar-w); padding: 28px 32px; min-height: 100vh; overflow-x: hidden; max-width: 100%; box-sizing: border-box; }
 
 /* ── TOPBAR ── */
 .topbar {
@@ -219,7 +219,7 @@ body {
 .view.active { display:block; }
 
 /* ── KPI CARDS ── */
-.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-bottom:20px; }
 .kpi-card {
   background:var(--surface); border:1px solid var(--border);
   border-radius:var(--radius); padding:18px; position:relative; overflow:hidden;
@@ -480,6 +480,13 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
 
 /* ── TOAST ── */
 
+/* ── CONFIG DROPDOWN (mobile) ── */
+.config-tab-dropdown { display: none; margin-bottom: 16px; }
+@media (max-width: 600px) {
+  .config-tabs { display: none !important; }
+  .config-tab-dropdown { display: block; }
+}
+
 /* ── COBRO CARDS (dashboard mobile-first) ── */
 .cobro-card {
   display: flex; align-items: center; justify-content: space-between;
@@ -555,7 +562,7 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
   .sidebar-actions .sa-label { display:none; }
   .nav-item { justify-content:center; padding:12px; }
   .nav-item svg { width:20px; height:20px; margin:0; }
-  .main { padding:16px; }
+  .main { padding:12px; overflow-x:hidden; }
   .kpi-grid { grid-template-columns:repeat(2,1fr); }
   .detail-panel { width:100%; }
   .report-grid { grid-template-columns:1fr; }
@@ -826,21 +833,57 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
   MODALS
 ══════════════════════════════════════════════════ -->
 
-<!-- Nuevo Cliente -->
+<!-- Nuevo / Editar Cliente -->
 <div class="modal-overlay" id="modal-nuevo-cliente">
-  <div class="modal">
-    <div class="modal-title">👤 Nuevo Cliente</div>
+  <div class="modal modal-wide" style="max-width:600px">
+    <div class="modal-title" id="modal-cliente-title">👤 Nuevo Cliente</div>
+    <input type="hidden" id="c-edit-id" value="">
+
+    <!-- Foto de perfil -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding:14px;background:var(--surface2);border-radius:10px;border:1px solid var(--border)">
+      <div id="c-foto-preview" onclick="document.getElementById('c-foto-input').click()"
+           style="width:72px;height:72px;border-radius:14px;background:var(--accent-dim);border:2px dashed var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;overflow:hidden;transition:all 0.2s">
+        <span style="font-size:1.5rem">📷</span>
+        <span style="font-size:0.65rem;color:var(--muted);margin-top:3px">Foto</span>
+      </div>
+      <input type="file" id="c-foto-input" accept="image/*" capture="environment" style="display:none" onchange="MODAL.cargarFoto(this)">
+      <div style="flex:1">
+        <div style="font-weight:600;font-size:0.9rem;margin-bottom:4px">Foto del cliente</div>
+        <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px">Toca para tomar foto o elegir de galería</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('c-foto-input').click()">📷 Cámara / Galería</button>
+          <button class="btn btn-ghost btn-sm" onclick="MODAL.quitarFoto()" id="c-foto-quitar" style="display:none">🗑️ Quitar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Campos -->
     <div class="form-grid">
-      <div class="form-group"><label>Nombre completo *</label><input type="text" id="c-nombre" placeholder="Juan Pérez López"></div>
+      <div class="form-group full">
+        <label>Nombre completo * <span id="c-nombre-lock-info" style="font-size:0.72rem;color:var(--muted);display:none">(no editable)</span></label>
+        <input type="text" id="c-nombre" placeholder="Juan Pérez López">
+      </div>
       <div class="form-group"><label>Teléfono principal</label><input type="tel" id="c-tel" placeholder="+52 444 000 0000"></div>
       <div class="form-group"><label>Teléfono 2 / WhatsApp</label><input type="tel" id="c-tel2" placeholder="+52 444 000 0001"></div>
-      <div class="form-group"><label>Email</label><input type="email" id="c-email" placeholder="correo@email.com"></div>
+      <div class="form-group full"><label>Email</label><input type="email" id="c-email" placeholder="correo@email.com"></div>
       <div class="form-group full"><label>Dirección completa</label><input type="text" id="c-dir" placeholder="Calle, número, colonia, ciudad"></div>
       <div class="form-group"><label>Referencia / Aval</label><input type="text" id="c-ref" placeholder="Nombre del aval"></div>
       <div class="form-group"><label>Ocupación</label><input type="text" id="c-ocup" placeholder="Comerciante, empleado..."></div>
-      <div class="form-group full"><label>Notas</label><textarea id="c-notas" placeholder="Observaciones, garantías, etc."></textarea></div>
+      <div class="form-group full"><label>Notas</label><textarea id="c-notas" placeholder="Observaciones, garantías, etc." rows="2"></textarea></div>
     </div>
-    <div class="modal-actions">
+
+    <!-- Documentos adjuntos -->
+    <div style="margin-top:4px">
+      <div class="config-section-title">📎 Documentos adjuntos (máx. 3)</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">INE, comprobante domicilio, contrato firmado, etc.</div>
+      <div id="c-docs-lista" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:10px"></div>
+      <button class="btn btn-ghost btn-sm" id="c-docs-add-btn" onclick="document.getElementById('c-doc-input').click()">
+        📎 Agregar documento
+      </button>
+      <input type="file" id="c-doc-input" accept="image/*,application/pdf,.pdf" style="display:none" onchange="MODAL.cargarDocumento(this)">
+    </div>
+
+    <div class="modal-actions" style="margin-top:16px">
       <button class="btn btn-ghost" onclick="MODAL.close('modal-nuevo-cliente')">Cancelar</button>
       <button class="btn btn-primary" onclick="MODAL.guardarCliente()">💾 Guardar</button>
     </div>
@@ -958,13 +1001,25 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
 <div class="modal-overlay" id="modal-config">
   <div class="modal modal-wide" style="width:680px">
     <div class="modal-title">⚙️ Configuración — PrestamoControl</div>
-    <div class="config-tabs">
+    <!-- Desktop tabs -->
+    <div class="config-tabs" id="config-tabs-desktop">
       <div class="config-tab active" onclick="switchConfigTab('negocio',this)">🏢 Negocio</div>
       <div class="config-tab" onclick="switchConfigTab('financiero',this)">💰 Financiero</div>
       <div class="config-tab" onclick="switchConfigTab('apariencia',this)">🎨 Apariencia</div>
       <div class="config-tab" onclick="switchConfigTab('seguridad',this)">🔐 Seguridad</div>
       <div class="config-tab" onclick="switchConfigTab('backup',this)">💾 Backup</div>
       <div class="config-tab" onclick="switchConfigTab('notif',this)">🔔 Avisos</div>
+    </div>
+    <!-- Mobile dropdown -->
+    <div class="config-tab-dropdown" id="config-tab-dropdown">
+      <select onchange="switchConfigTabByVal(this.value)" style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:0.88rem;font-family:var(--font-body);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%236b7494%22 d=%22M6 8L1 3h10z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center">
+        <option value="negocio">🏢 Negocio</option>
+        <option value="financiero">💰 Financiero</option>
+        <option value="apariencia">🎨 Apariencia</option>
+        <option value="seguridad">🔐 Seguridad</option>
+        <option value="backup">💾 Backup</option>
+        <option value="notif">🔔 Avisos</option>
+      </select>
     </div>
 
     <!-- ── NEGOCIO ── -->
@@ -2638,8 +2693,11 @@ const UI = {
       const venc = prestamos.filter(p=>PC.estadoPrestamo(p)==='vencido').length;
       const analisis = PC.analisisCredito(c.id);
       const color = PC.avatarColor(c.nombre);
+      const fotoHtml = c.foto
+        ? `<div class="client-avatar" style="padding:0;overflow:hidden"><img src="${c.foto}" style="width:100%;height:100%;object-fit:cover"></div>`
+        : `<div class="client-avatar" style="background:${color}22;color:${color}">${PC.initials(c.nombre)}</div>`;
       return `<div class="client-card" onclick="UI.abrirDetalleCliente(${c.id})">
-        <div class="client-avatar" style="background:${color}22;color:${color}">${PC.initials(c.nombre)}</div>
+        ${fotoHtml}
         <div class="client-info">
           <div class="client-name">${c.nombre}</div>
           <div class="client-phone">📱 ${c.telefono||'—'} ${c.email?'· 📧 '+c.email:''}</div>
@@ -2680,32 +2738,43 @@ const UI = {
     if(!items.length){el.innerHTML='<div class="empty-state"><div class="e-icon">🎉</div><p>No hay cobros en esta categoría</p></div>';return;}
     el.innerHTML = `
       <div class="cobros-summary">
-        <span>${items.length} cobros</span>
-        <span style="color:var(--accent);font-weight:700">${PC.fmt(total)}</span>
-        <button class="btn btn-ghost btn-sm" onclick="PCXLSX.exportarCobrosHoy()">📊 Exportar</button>
-        <button class="btn btn-ghost btn-sm" onclick="UI.pdfCobros()">📄 PDF Ruta</button>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1">
+          <span style="font-weight:600">${items.length} cobros</span>
+          <span style="color:var(--accent);font-weight:700">${PC.fmt(total)}</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="PCXLSX.exportarCobrosHoy()">📊 Excel</button>
+          <button class="btn btn-ghost btn-sm" onclick="UI.pdfCobros()">📄 Ruta PDF</button>
+        </div>
       </div>
-      <table><thead><tr><th>Cliente</th><th>Teléfono</th><th>Dirección</th><th>Cuota</th><th>Fecha</th><th>Monto</th><th>Días</th><th>Acciones</th></tr></thead><tbody>
       ${items.map(({p,c,dias})=>{
         const cl=PC.getCliente(p.clienteId);
-        const diasStr=dias===0?'<span style="color:var(--warn)">Hoy</span>':dias>0?`<span class="badge badge-late">+${dias}d</span>`:`<span style="color:var(--muted)">${Math.abs(dias)}d</span>`;
         const mora = dias > (PC.config.diasGracia||3) ? PC.calcMora(c, dias-(PC.config.diasGracia||3)) : 0;
-        const moraTag = mora > 0 ? `<span style="font-size:0.72rem;color:var(--danger);display:block">⚠️ +${PC.fmt(mora)} mora</span>` : '';
-        return `<tr>
-          <td>${this.avatarEl(cl.nombre)} ${cl.nombre}</td>
-          <td><a href="${PC.waLink(cl.telefono,'')}" target="_blank" style="color:var(--accent);text-decoration:none">📱 ${cl.telefono||'—'}</a></td>
-          <td style="color:var(--muted);font-size:0.82rem">${cl.direccion||'—'}</td>
-          <td>Cuota ${c.num}/${p.numCuotas}</td>
-          <td style="color:${c.fecha<hoy?'var(--danger)':'var(--muted)'}">${c.fecha}</td>
-          <td class="td-amount green">${PC.fmt(c.monto)}</td>
-          <td>${diasStr}</td>
-          <td style="white-space:nowrap">
-            <button class="btn btn-primary btn-sm" onclick="MODAL.abrirAbono(${p.id})">Cobrar</button>
-            <button class="btn btn-ghost btn-sm" onclick="UI.waLink2(${cl.id},${p.id},'${c.fecha<hoy?'atrasado':'recordatorio'}')" title="WhatsApp">💬</button>
-          </td>
-        </tr>`;
-      }).join('')}
-      </tbody></table>`;
+        const vencida = c.fecha < hoy;
+        const tipoWA = vencida ? 'atrasado' : 'recordatorio';
+        return `<div class="cobro-card ${vencida?'cobro-card-vencida':''}">
+          <div class="cobro-card-left">
+            ${this.avatarEl(cl.nombre)}
+            <div style="min-width:0">
+              <div class="cobro-card-nombre">${cl.nombre}</div>
+              <div class="cobro-card-tel">📱 ${cl.telefono||'Sin tel'}</div>
+              <div class="cobro-card-cuota">Cuota ${c.num}/${p.numCuotas} · ${c.fecha}</div>
+              ${cl.direccion?`<div class="cobro-card-cuota">📍 ${cl.direccion}</div>`:''}
+              ${dias>0?`<span class="badge badge-late">+${dias}d</span>`:''}
+            </div>
+          </div>
+          <div class="cobro-card-right">
+            <div class="cobro-card-monto" style="color:${mora>0?'var(--danger)':'var(--accent)'}">
+              ${PC.fmt(mora>0?c.monto+mora:c.monto)}
+              ${mora>0?`<span class="cobro-mora-tag">+mora</span>`:''}
+            </div>
+            <div class="cobro-card-btns">
+              <button class="btn btn-primary btn-sm" onclick="MODAL.abrirAbono(${p.id})">💰 Cobrar</button>
+              <button class="btn btn-ghost btn-sm" onclick="UI.waLink2(${cl.id},${p.id},'${tipoWA}')">💬 WA</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}`;
   },
   setCobrosFilter(f, el) {
     this.cobrosFiltro = f;
@@ -2885,7 +2954,7 @@ const UI = {
       <div class="dp-actions" style="grid-template-columns:1fr 1fr">
         <button class="btn btn-primary" onclick="UI.waLink2(${id},null,'recordatorio')">💬 WhatsApp</button>
         <button class="btn btn-ghost" onclick="MODAL.abrirNuevoPrestamo(${id})">+ Préstamo</button>
-        <button class="btn btn-ghost" onclick="PCPDF.abrir(PCPDF.generarEstadoCuenta(${id}), 'Estado de Cuenta', cl.nombre, {clienteId:${id}})">📄 PDF Estado</button>
+        <button class="btn btn-ghost" onclick="const _cl=PC.getCliente(${id});PCPDF.abrir(PCPDF.generarEstadoCuenta(${id}),'Estado de Cuenta',_cl.nombre,{clienteId:${id}})">📄 PDF Estado</button>
         <button class="btn btn-ghost" onclick="UI.eliminarCliente(${id})">🗑️ Eliminar</button>
       </div>
       <!-- Score crediticio -->
@@ -2969,7 +3038,12 @@ const MODAL = {
   open(id) {
     document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
     const m = document.getElementById(id);
-    if (m) { m.classList.add('show'); this._active = id; }
+    if (m) {
+      m.classList.add('show');
+      this._active = id;
+      // Push state so Android back button closes modal
+      history.pushState({ modal: id }, '', window.location.href);
+    }
   },
   close(id) {
     const m = document.getElementById(id || this._active);
@@ -2984,31 +3058,191 @@ const MODAL = {
     });
     this.open('modal-nuevo-cliente');
   },
-  guardarCliente() {
-    const nombre = document.getElementById('c-nombre').value.trim();
-    if(!nombre) { UI.toast('Ingresa el nombre del cliente','⚠️'); return; }
-    const cliente = {
-      id: PC.state.nextClienteId++,
-      nombre,
-      telefono: document.getElementById('c-tel').value.trim(),
-      telefono2: document.getElementById('c-tel2').value.trim(),
-      email: document.getElementById('c-email').value.trim(),
-      direccion: document.getElementById('c-dir').value.trim(),
-      referencia: document.getElementById('c-ref').value.trim(),
-      ocupacion: document.getElementById('c-ocup').value.trim(),
-      notas: document.getElementById('c-notas').value.trim(),
-      documentos: [],
-      creado: PC.today(),
-    };
-    PC.state.clientes.push(cliente);
-    PC.saveState();
-    this.close('modal-nuevo-cliente');
-    UI.toast(`Cliente ${nombre} registrado 👤`);
-    UI.renderClientes();
-    this._refreshClienteSelect();
+  _clienteFotoData: null,
+  _clienteDocs: [],
+
+  abrirNuevoCliente2() {
+    // Reset form
+    document.getElementById('c-edit-id').value = '';
+    document.getElementById('modal-cliente-title').textContent = '👤 Nuevo Cliente';
+    document.getElementById('c-nombre').value = '';
+    document.getElementById('c-nombre').disabled = false;
+    document.getElementById('c-nombre-lock-info').style.display = 'none';
+    document.getElementById('c-tel').value = '';
+    document.getElementById('c-tel2').value = '';
+    document.getElementById('c-email').value = '';
+    document.getElementById('c-dir').value = '';
+    document.getElementById('c-ref').value = '';
+    document.getElementById('c-ocup').value = '';
+    document.getElementById('c-notas').value = '';
+    this._clienteFotoData = null;
+    this._clienteDocs = [];
+    this._renderFotoPreview(null);
+    this._renderDocsLista();
+    this.open('modal-nuevo-cliente');
   },
 
+  abrirEditarCliente(id) {
+    const cl = PC.getCliente(id);
+    if (!cl) return;
+    document.getElementById('c-edit-id').value = id;
+    document.getElementById('modal-cliente-title').textContent = '✏️ Editar Cliente';
+    document.getElementById('c-nombre').value = cl.nombre;
+    document.getElementById('c-nombre').disabled = true;
+    document.getElementById('c-nombre-lock-info').style.display = 'inline';
+    document.getElementById('c-tel').value = cl.telefono || '';
+    document.getElementById('c-tel2').value = cl.telefono2 || '';
+    document.getElementById('c-email').value = cl.email || '';
+    document.getElementById('c-dir').value = cl.direccion || '';
+    document.getElementById('c-ref').value = cl.referencia || '';
+    document.getElementById('c-ocup').value = cl.ocupacion || '';
+    document.getElementById('c-notas').value = cl.notas || '';
+    this._clienteFotoData = cl.foto || null;
+    this._clienteDocs = cl.documentos ? [...cl.documentos] : [];
+    this._renderFotoPreview(this._clienteFotoData);
+    this._renderDocsLista();
+    this.open('modal-nuevo-cliente');
+  },
+
+  cargarFoto(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 1.5 * 1024 * 1024) { UI.toast('Imagen muy grande (máx 1.5MB)','⚠️'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this._clienteFotoData = e.target.result;
+      this._renderFotoPreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  },
+
+  quitarFoto() {
+    this._clienteFotoData = null;
+    this._renderFotoPreview(null);
+  },
+
+  _renderFotoPreview(dataUrl) {
+    const el = document.getElementById('c-foto-preview');
+    const qBtn = document.getElementById('c-foto-quitar');
+    if (dataUrl) {
+      el.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`;
+      el.style.border = '2px solid var(--accent)';
+      if (qBtn) qBtn.style.display = 'inline-flex';
+    } else {
+      el.innerHTML = '<span style="font-size:1.5rem">📷</span><span style="font-size:0.65rem;color:var(--muted);margin-top:3px">Foto</span>';
+      el.style.border = '2px dashed var(--accent)';
+      if (qBtn) qBtn.style.display = 'none';
+    }
+  },
+
+  cargarDocumento(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (this._clienteDocs.length >= 3) { UI.toast('Máximo 3 documentos por cliente','⚠️'); return; }
+    if (file.size > 2 * 1024 * 1024) { UI.toast('Archivo muy grande (máx 2MB)','⚠️'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      this._clienteDocs.push({
+        nombre: file.name,
+        tipo: file.type,
+        datos: e.target.result,
+        fecha: PC.today(),
+      });
+      this._renderDocsLista();
+      input.value = '';
+    };
+    reader.readAsDataURL(file);
+  },
+
+  _renderDocsLista() {
+    const el = document.getElementById('c-docs-lista');
+    const addBtn = document.getElementById('c-docs-add-btn');
+    if (!el) return;
+    if (!this._clienteDocs.length) {
+      el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem;padding:8px 0">Sin documentos adjuntos</div>';
+    } else {
+      el.innerHTML = this._clienteDocs.map((d, i) => {
+        const esImagen = d.tipo.startsWith('image/');
+        const icono = esImagen ? `<img src="${d.datos}" style="width:100%;height:60px;object-fit:cover;border-radius:6px;margin-bottom:6px">` : '<div style="font-size:2rem;text-align:center;padding:10px">📄</div>';
+        return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center;position:relative">
+          ${icono}
+          <div style="font-size:0.7rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.nombre}</div>
+          <div style="display:flex;gap:4px;margin-top:6px;justify-content:center">
+            <button class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:0.72rem" onclick="MODAL.verDoc(${i})">👁️</button>
+            <button class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:0.72rem;color:var(--danger)" onclick="MODAL.eliminarDoc(${i})">🗑️</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    if (addBtn) addBtn.style.display = this._clienteDocs.length >= 3 ? 'none' : 'inline-flex';
+  },
+
+  verDoc(idx) {
+    const doc = this._clienteDocs[idx];
+    if (!doc) return;
+    if (doc.tipo.startsWith('image/')) {
+      const w = window.open('', '_blank');
+      w.document.write(`<html><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="${doc.datos}" style="max-width:100%;max-height:100vh"></body></html>`);
+    } else {
+      const a = document.createElement('a');
+      a.href = doc.datos;
+      a.download = doc.nombre;
+      a.click();
+    }
+  },
+
+  eliminarDoc(idx) {
+    this._clienteDocs.splice(idx, 1);
+    this._renderDocsLista();
+  },
+
+  guardarCliente() {
+    const editId = document.getElementById('c-edit-id').value;
+    const isEdit = !!editId;
+    const nombre = document.getElementById('c-nombre').value.trim();
+    if(!isEdit && !nombre) { UI.toast('Ingresa el nombre del cliente','⚠️'); return; }
+
+    const datos = {
+      telefono:  document.getElementById('c-tel').value.trim(),
+      telefono2: document.getElementById('c-tel2').value.trim(),
+      email:     document.getElementById('c-email').value.trim(),
+      direccion: document.getElementById('c-dir').value.trim(),
+      referencia:document.getElementById('c-ref').value.trim(),
+      ocupacion: document.getElementById('c-ocup').value.trim(),
+      notas:     document.getElementById('c-notas').value.trim(),
+      foto:      this._clienteFotoData,
+      documentos:this._clienteDocs,
+    };
+
+    if (isEdit) {
+      const cl = PC.getCliente(parseInt(editId));
+      if (cl) {
+        Object.assign(cl, datos);
+        PC.saveState();
+        this.close('modal-nuevo-cliente');
+        UI.renderClientes();
+        UI.toast('Cliente actualizado ✅');
+      }
+    } else {
+      const cliente = {
+        id: PC.state.nextClienteId++,
+        nombre,
+        ...datos,
+        creado: PC.today(),
+      };
+      PC.state.clientes.push(cliente);
+      PC.state.nextClienteId = Math.max(PC.state.nextClienteId, cliente.id + 1);
+      PC.saveState();
+      this.close('modal-nuevo-cliente');
+      UI.renderClientes();
+      UI.toast('Cliente registrado ✅');
+    }
+    this._clienteFotoData = null;
+    this._clienteDocs = [];
+  },,
+
   // ── NUEVO PRÉSTAMO ────────────────────────────────────────
+  abrirNuevoCliente() { this.abrirNuevoCliente2(); },
   abrirNuevoPrestamo(clienteId) {
     this._nuevoPrestamoClienteId = clienteId || null;
     this._refreshClienteSelect();
@@ -3117,6 +3351,43 @@ const MODAL = {
     document.getElementById('abono-nota').value = '';
     this.open('modal-abono');
   },
+  mostrarOpcionesComprobante(prestamoId, cuotaNum, cl) {
+    // Show a nice modal instead of confirm()
+    const existing = document.getElementById('modal-comprobante-opts');
+    if(existing) existing.remove();
+    const modal = document.createElement('div');
+    modal.id = 'modal-comprobante-opts';
+    modal.className = 'modal-overlay show';
+    modal.innerHTML = `
+      <div class="modal" style="max-width:380px;text-align:center">
+        <div style="font-size:2.5rem;margin-bottom:8px">✅</div>
+        <div class="modal-title" style="justify-content:center">Pago Registrado</div>
+        <div style="color:var(--muted);font-size:0.88rem;margin-bottom:20px">¿Qué deseas hacer ahora?</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-primary" style="padding:14px;font-size:0.95rem"
+            onclick="
+              document.getElementById('modal-comprobante-opts').remove();
+              const doc=PCPDF.generarComprobante(${prestamoId},${cuotaNum});
+              PCPDF.abrir(doc,'Comprobante de Pago','${cl.nombre}',{filename:'Comprobante_${cl.nombre}_${cuotaNum}',clienteId:${cl.id}});
+            ">
+            🧾 Ver comprobante de pago
+          </button>
+          <button class="btn btn-ghost" style="padding:14px;font-size:0.95rem"
+            onclick="
+              document.getElementById('modal-comprobante-opts').remove();
+              UI.waLink2(${cl.id},${prestamoId},'pago');
+            ">
+            💬 Enviar confirmación por WhatsApp
+          </button>
+          <button class="btn btn-ghost" style="padding:12px"
+            onclick="document.getElementById('modal-comprobante-opts').remove()">
+            Cerrar
+          </button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    history.pushState({ modal: 'modal-comprobante-opts' }, '', window.location.href);
+  },
   aplicarMora(total) {
     document.getElementById('abono-monto').value = parseFloat(total).toFixed(2);
     document.getElementById('abono-nota').value = 'Incluye interés moratorio';
@@ -3135,20 +3406,23 @@ const MODAL = {
     const proxima = PC.proximaCuota(p);
     if(!proxima) { UI.toast('Este préstamo ya está liquidado','⚠️'); return; }
     if(!monto) { UI.toast('Ingresa el monto del abono','⚠️'); return; }
+    const cuotaNum = proxima.num; // Save BEFORE marking paid
     proxima.pagado = true;
     proxima.fechaPago = fecha;
     proxima.montoPagado = monto;
     proxima.notaPago = nota;
     p.estado = PC.estadoPrestamo(p);
     // Log pago
-    PC.state.pagos.push({ id: PC.state.nextPagoId++, prestamoId: p.id, clienteId: p.clienteId, cuotaNum: proxima.num, monto, fecha, nota });
+    PC.state.pagos.push({ id: PC.state.nextPagoId++, prestamoId: p.id, clienteId: p.clienteId, cuotaNum, monto, fecha, nota });
     PC.saveState();
     this.close('modal-abono');
+    UI.renderView(UI._currentView || 'dashboard');
     UI.toast('Pago registrado ✅');
-    // Ofrecer comprobante
-    if(confirm('¿Generar comprobante de pago?')) {
-      PCPDF.abrir(PCPDF.generarComprobante(p.id, proxima.num), 'Comprobante de Pago', cl.nombre, {filename:`Comprobante_${cl.nombre}_${proxima.num}`, clienteId:p.clienteId});
-    }
+    // Mostrar modal comprobante
+    const cl2 = PC.getCliente(p.clienteId);
+    setTimeout(() => {
+      MODAL.mostrarOpcionesComprobante(p.id, cuotaNum, cl2);
+    }, 300);
     // Ofrecer WA pago puntual
     const cl = PC.getCliente(p.clienteId);
     if(cl.telefono && confirm(`¿Enviar confirmación por WhatsApp a ${cl.nombre}?`)) {
@@ -4140,6 +4414,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   UI.init();
 
+  // Android back button — close modal instead of leaving app
+  window.addEventListener('popstate', (e) => {
+    if (MODAL._active) {
+      MODAL.close(MODAL._active);
+    } else if (UI._detailOpen) {
+      document.getElementById('detail-panel')?.classList.remove('open');
+      UI._detailOpen = false;
+    }
+  });
+
   // Init Google Drive integration
   if (PC.config.googleClientId) {
     GCLOUD.init().then(ok => {
@@ -4413,6 +4697,7 @@ const PDFVIEWER = {
     this._filename = opts.filename || titulo || 'documento';
     this._prestamoId = opts.prestamoId || null;
     this._clienteId = opts.clienteId || null;
+    this._opts = opts;
     this._currentPage = 1;
 
     document.getElementById('pdf-viewer-title').textContent = titulo || 'Documento';
@@ -4529,11 +4814,16 @@ const PDFVIEWER = {
   },
 
   compartirWA() {
-    // On mobile: share the PDF download link or just open WA with context message
     let msg = `Hola, te comparto el documento: ${this._filename}`;
     if (this._clienteId) {
       const cl = PC.getCliente(this._clienteId);
-      msg = `Hola ${cl.nombre.split(' ')[0]}, te adjunto tu documento de PrestamoControl: ${this._filename}. — ${PC.config.prestamistaNombre||''}`;
+      const nombre = cl.nombre.split(' ')[0];
+      const prestamista = PC.config.prestamistaNombre || '';
+      const tipo = (this._opts && this._opts.tipo) || '';
+      if (tipo === 'pagare') msg = `Hola ${nombre} 👋, te comparto tu pagaré. Por favor revísalo y confirma. — ${prestamista}`;
+      else if (tipo === 'contrato') msg = `Hola ${nombre} 👋, adjunto el contrato de tu préstamo. — ${prestamista}`;
+      else if (tipo === 'comprobante') msg = `Hola ${nombre} ✅, tu pago ha sido registrado. Adjunto comprobante. — ${prestamista}`;
+      else msg = `Hola ${nombre}, te comparto: ${this._filename}. — ${prestamista}`;
     }
     // Try Web Share API first (mobile)
     if (navigator.share && this._pdfBytes) {
