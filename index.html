@@ -182,7 +182,17 @@ body {
 .main { margin-left: var(--sidebar-w); padding: 28px 32px; min-height: 100vh; }
 
 /* ── TOPBAR ── */
-.topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:24px; gap:12px;
+}
+.topbar-left { min-width: 0; }
+.topbar-right { display:flex; gap:8px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end; }
+@media (max-width:500px) {
+  .topbar { flex-wrap: wrap; }
+  .topbar-right .btn { padding: 8px 12px; font-size: 0.8rem; }
+  .topbar-right .btn span { display: none; }
+}
 .topbar-left h2 { font-family:var(--font-head); font-size:1.4rem; font-weight:700; }
 .topbar-left .topbar-sub { font-size:0.8rem; color:var(--muted); margin-top:2px; }
 .topbar-right { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
@@ -251,6 +261,9 @@ select.filter-sel {
 
 /* ── TABLE ── */
 table { width:100%; border-collapse:collapse; }
+/* Mobile table scroll */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table-wrap table { min-width: 600px; }
 th {
   padding:10px 18px; text-align:left; font-size:0.68rem; color:var(--muted);
   text-transform:uppercase; letter-spacing:0.8px;
@@ -436,10 +449,15 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
 .help-badge { display:inline-block; background:var(--accent); color:#0a0c10; border-radius:5px; padding:1px 7px; font-size:0.72rem; font-weight:700; margin:0 2px; }
 
 /* ── CONFIG TABS ── */
-.config-tabs { display:flex; gap:3px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:0; }
-.config-tab { padding:8px 14px; cursor:pointer; font-size:0.82rem; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; transition:all var(--transition); }
+.config-tabs {
+  display:flex; gap:3px; margin-bottom:0; border-bottom:1px solid var(--border);
+  padding-bottom:0; position:sticky; top:0; z-index:10;
+  background:var(--surface); padding-top:4px;
+  margin-left:-28px; margin-right:-28px; padding-left:28px; padding-right:28px;
+}
+.config-tab { padding:8px 12px; cursor:pointer; font-size:0.8rem; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; transition:all var(--transition); white-space:nowrap; }
 .config-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
-.config-panel { display:none; }
+.config-panel { display:none; padding-top:16px; }
 .config-panel.active { display:block; }
 .config-section-title { font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.8px; margin:16px 0 8px; padding-bottom:4px; border-bottom:1px solid var(--border); }
 
@@ -461,6 +479,46 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
 .pin-key.del { font-size:1rem; }
 
 /* ── TOAST ── */
+
+/* ── COBRO CARDS (dashboard mobile-first) ── */
+.cobro-card {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 18px; border-bottom: 1px solid var(--border);
+  gap: 12px; flex-wrap: wrap;
+}
+.cobro-card:last-child { border-bottom: none; }
+.cobro-card-vencida { background: rgba(255,71,87,0.04); }
+.cobro-card-left {
+  display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
+}
+.cobro-card-nombre {
+  font-weight: 600; font-size: 0.92rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 200px;
+}
+.cobro-card-tel { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.cobro-card-cuota { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.cobro-card-right {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  flex-shrink: 0;
+}
+.cobro-card-monto {
+  font-family: var(--font-head); font-size: 1.1rem; font-weight: 700;
+}
+.cobro-mora-tag {
+  font-size: 0.68rem; background: rgba(255,71,87,0.15);
+  color: var(--danger); padding: 1px 6px; border-radius: 10px;
+  margin-left: 4px; vertical-align: middle;
+}
+.cobro-card-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 480px) {
+  .cobro-card { padding: 12px 14px; }
+  .cobro-card-nombre { max-width: 140px; font-size: 0.87rem; }
+  .cobro-card-monto { font-size: 1rem; }
+  .cobro-card-btns .btn-sm { padding: 7px 12px; font-size: 0.8rem; }
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 .sync-spinner { display:inline-block; animation: spin 1s linear infinite; }
 
@@ -506,6 +564,14 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
   .form-grid { grid-template-columns:1fr; }
   .dp-actions { grid-template-columns:1fr; }
   .kpi-val { font-size:1.2rem; }
+  /* Hide less important table columns on mobile */
+  .hide-mobile { display:none !important; }
+  /* Mobile cobros — stack layout */
+  .cobrador-card { flex-direction:column; }
+  .cobrador-card > div:last-child { text-align:left !important; }
+  .cobrador-card > div:last-child > div:last-child { justify-content:flex-start !important; }
+  /* Mobile tables */
+  .table-wrap { margin: 0 -1px; border-radius:0; }
 }
 </style>
 </head>
@@ -1608,6 +1674,17 @@ const PC = {
   totalPagado: p => p.cuotas.filter(c => c.pagado).reduce((a, c) => a + (c.montoPagado || c.monto), 0),
   totalPrestamo: p => p.cuotas.reduce((a, c) => a + c.monto, 0),
   proximaCuota: p => p.cuotas.find(c => !c.pagado) || null,
+  calcMora(cuota, diasRetraso) {
+    if (!cuota || diasRetraso <= 0) return 0;
+    // Mora diaria = (% mora / 30) * monto * días
+    const moraPorc = PC.config.moraPorc || 5;
+    return Math.round((cuota.monto * (moraPorc / 100) / 30) * diasRetraso * 100) / 100;
+  },
+  cuotaConMora(cuota, hoy) {
+    const dias = PC.diffDays(hoy || PC.today(), cuota.fecha);
+    const mora = dias > (PC.config.diasGracia || 3) ? PC.calcMora(cuota, dias - (PC.config.diasGracia || 3)) : 0;
+    return { ...cuota, mora, totalConMora: cuota.monto + mora, diasRetraso: dias };
+  },
   estadoPrestamo(p) {
     if (this.cuotasPagadas(p) === p.cuotas.length) return 'pagado';
     const prox = this.proximaCuota(p);
@@ -2163,7 +2240,9 @@ const PCPDF = {
   },
 
   // ── OPEN/SAVE ────────────────────────────────────────────
-  abrir(doc) { doc.output('dataurlnewwindow'); },
+  abrir(doc, titulo, subtitulo, opts) {
+    PDFVIEWER.abrir(doc, titulo || 'Documento', subtitulo || '', opts || {});
+  },
   descargar(doc, nombre) { doc.save(nombre + '.pdf'); },
   blob(doc) { return doc.output('blob'); },
 };
@@ -2419,21 +2498,32 @@ const UI = {
     if (!cobrosHoy.length) {
       cobrosEl.innerHTML = '<div class="empty-state"><div class="e-icon">✅</div><p>Sin cobros programados hoy</p></div>';
     } else {
-      cobrosEl.innerHTML = `<table><thead><tr><th>Cliente</th><th>Teléfono</th><th>Cuota</th><th>Monto</th><th>Acciones</th></tr></thead><tbody>
-        ${cobrosHoy.map(({p,c}) => {
+      cobrosEl.innerHTML = cobrosHoy.map(({p,c}) => {
           const cl = PC.getCliente(p.clienteId);
-          return `<tr>
-            <td>${this.avatarEl(cl.nombre)} ${cl.nombre}</td>
-            <td style="color:var(--muted)">${cl.telefono||'—'}</td>
-            <td>Cuota ${c.num}/${p.numCuotas}</td>
-            <td class="td-amount green">${PC.fmt(c.monto)}</td>
-            <td>
-              <button class="btn btn-primary btn-sm" onclick="MODAL.abrirAbono(${p.id})">Cobrar</button>
-              <button class="btn btn-ghost btn-sm" onclick="UI.waRecordatorio(${p.clienteId},${p.id})">💬 WA</button>
-            </td>
-          </tr>`;
-        }).join('')}
-      </tbody></table>`;
+          const cuotaM = PC.cuotaConMora(c, hoy);
+          const mora = cuotaM.mora;
+          const tieneRetraso = mora > 0;
+          return `<div class="cobro-card">
+            <div class="cobro-card-left">
+              ${this.avatarEl(cl.nombre)}
+              <div>
+                <div class="cobro-card-nombre">${cl.nombre}</div>
+                <div class="cobro-card-tel">${cl.telefono||'Sin teléfono'}</div>
+                <div class="cobro-card-cuota">Cuota ${c.num}/${p.numCuotas} · ${c.fecha}</div>
+              </div>
+            </div>
+            <div class="cobro-card-right">
+              <div class="cobro-card-monto" style="color:${tieneRetraso?'var(--danger)':'var(--accent)'}">
+                ${PC.fmt(tieneRetraso ? cuotaM.totalConMora : c.monto)}
+                ${tieneRetraso ? `<span class="cobro-mora-tag">+mora</span>` : ''}
+              </div>
+              <div class="cobro-card-btns">
+                <button class="btn btn-primary btn-sm" onclick="MODAL.abrirAbono(${p.id})">💰 Cobrar</button>
+                <button class="btn btn-ghost btn-sm" onclick="UI.waRecordatorio(${p.clienteId},${p.id})">💬 WA</button>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
     }
 
     // Vencidos alert
@@ -2443,24 +2533,38 @@ const UI = {
       if(!c.pagado && c.fecha < hoy) vencidosCuotas.push({p,c});
     }));
     if (!vencidosCuotas.length) { vencEl.innerHTML=''; return; }
-    vencEl.innerHTML = `<div class="alert-band">⚠️ ${vencidosCuotas.length} cuotas vencidas · ${PC.fmt(vencidosCuotas.reduce((a,x)=>a+x.c.monto,0))} pendientes</div>
-    <table><thead><tr><th>Cliente</th><th>Cuota</th><th>Venció</th><th>Días</th><th>Monto</th><th></th></tr></thead><tbody>
-      ${vencidosCuotas.slice(0,8).map(({p,c})=>{
-        const cl=PC.getCliente(p.clienteId);
-        const dias=PC.diffDays(hoy,c.fecha);
-        return `<tr>
-          <td>${this.avatarEl(cl.nombre)} ${cl.nombre}</td>
-          <td>Cuota ${c.num}</td>
-          <td style="color:var(--danger)">${c.fecha}</td>
-          <td><span class="badge badge-late">+${dias}d</span></td>
-          <td class="td-amount" style="color:var(--danger)">${PC.fmt(c.monto)}</td>
-          <td>
-            <button class="btn btn-ghost btn-sm" onclick="MODAL.abrirAbono(${p.id})">Cobrar</button>
+    const moraTotal = vencidosCuotas.reduce((a,x)=>{
+      const cm=PC.cuotaConMora(x.c,hoy); return a+cm.totalConMora;
+    },0);
+    vencEl.innerHTML = `<div class="alert-band">⚠️ ${vencidosCuotas.length} cuotas vencidas · ${PC.fmt(moraTotal)} pendientes (incl. mora)</div>
+    ${vencidosCuotas.slice(0,8).map(({p,c})=>{
+      const cl=PC.getCliente(p.clienteId);
+      const cuotaM=PC.cuotaConMora(c,hoy);
+      const dias=cuotaM.diasRetraso;
+      const mora=cuotaM.mora;
+      return `<div class="cobro-card cobro-card-vencida">
+        <div class="cobro-card-left">
+          ${this.avatarEl(cl.nombre)}
+          <div>
+            <div class="cobro-card-nombre">${cl.nombre}</div>
+            <div class="cobro-card-cuota">Cuota ${c.num} · venció <span style="color:var(--danger)">${c.fecha}</span></div>
+            <div style="margin-top:3px">
+              <span class="badge badge-late">+${dias}d</span>
+              ${mora>0?`<span style="font-size:0.72rem;color:var(--danger);margin-left:6px">⚠️ mora: +${PC.fmt(mora)}</span>`:''}
+            </div>
+          </div>
+        </div>
+        <div class="cobro-card-right">
+          <div class="cobro-card-monto" style="color:var(--danger)">
+            ${PC.fmt(cuotaM.totalConMora)}
+          </div>
+          <div class="cobro-card-btns">
+            <button class="btn btn-danger btn-sm" onclick="MODAL.abrirAbono(${p.id})">💰 Cobrar</button>
             <button class="btn btn-ghost btn-sm" onclick="UI.waAtrasado(${cl.id},${p.id})">⚠️ WA</button>
-          </td>
-        </tr>`;
-      }).join('')}
-    </tbody></table>`;
+          </div>
+        </div>
+      </div>`;
+    }).join('')}`;
   },
   _setKPI(id, val, sub) {
     const el = document.getElementById(id);
@@ -2585,6 +2689,8 @@ const UI = {
       ${items.map(({p,c,dias})=>{
         const cl=PC.getCliente(p.clienteId);
         const diasStr=dias===0?'<span style="color:var(--warn)">Hoy</span>':dias>0?`<span class="badge badge-late">+${dias}d</span>`:`<span style="color:var(--muted)">${Math.abs(dias)}d</span>`;
+        const mora = dias > (PC.config.diasGracia||3) ? PC.calcMora(c, dias-(PC.config.diasGracia||3)) : 0;
+        const moraTag = mora > 0 ? `<span style="font-size:0.72rem;color:var(--danger);display:block">⚠️ +${PC.fmt(mora)} mora</span>` : '';
         return `<tr>
           <td>${this.avatarEl(cl.nombre)} ${cl.nombre}</td>
           <td><a href="${PC.waLink(cl.telefono,'')}" target="_blank" style="color:var(--accent);text-decoration:none">📱 ${cl.telefono||'—'}</a></td>
@@ -2779,7 +2885,7 @@ const UI = {
       <div class="dp-actions" style="grid-template-columns:1fr 1fr">
         <button class="btn btn-primary" onclick="UI.waLink2(${id},null,'recordatorio')">💬 WhatsApp</button>
         <button class="btn btn-ghost" onclick="MODAL.abrirNuevoPrestamo(${id})">+ Préstamo</button>
-        <button class="btn btn-ghost" onclick="PCPDF.abrir(PCPDF.generarEstadoCuenta(${id}))">📄 PDF Estado</button>
+        <button class="btn btn-ghost" onclick="PCPDF.abrir(PCPDF.generarEstadoCuenta(${id}), 'Estado de Cuenta', cl.nombre, {clienteId:${id}})">📄 PDF Estado</button>
         <button class="btn btn-ghost" onclick="UI.eliminarCliente(${id})">🗑️ Eliminar</button>
       </div>
       <!-- Score crediticio -->
@@ -2846,7 +2952,7 @@ const UI = {
   // ── PDF SHORTCUTS ─────────────────────────────────────────
   pdfCobros() {
     const doc = PCPDF.generarReporteCobros();
-    PCPDF.abrir(doc);
+    PCPDF.abrir(doc, 'Ruta de Cobros', new Date().toLocaleDateString('es-MX'));
   },
 };
 
@@ -2962,20 +3068,64 @@ const MODAL = {
     const cl = PC.getCliente(p.clienteId);
     const proxima = PC.proximaCuota(p);
     const pagadas = PC.cuotasPagadas(p);
+    const cuotaInfo = proxima ? PC.cuotaConMora(proxima, PC.today()) : null;
+    const tieneRetraso = cuotaInfo && cuotaInfo.diasRetraso > (PC.config.diasGracia||3);
+    const moraAmt = cuotaInfo ? cuotaInfo.mora : 0;
     document.getElementById('abono-info').innerHTML = `
-      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:${tieneRetraso?'10px':'16px'}">
         <div style="font-weight:600;margin-bottom:8px">${cl.nombre}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.83rem">
           <div style="color:var(--muted)">Cuotas pagadas<br><b style="color:var(--accent);font-size:1rem">${pagadas}/${p.numCuotas}</b></div>
-          <div style="color:var(--muted)">Cuota esperada<br><b style="color:var(--accent2);font-size:1rem">${proxima?PC.fmt(proxima.monto):'Completado'}</b></div>
+          <div style="color:var(--muted)">Cuota original<br><b style="color:var(--accent2);font-size:1rem">${proxima?PC.fmt(proxima.monto):'Completado'}</b></div>
           <div style="color:var(--muted)">Fecha esperada<br><b style="color:${proxima&&proxima.fecha<PC.today()?'var(--danger)':'var(--text)'}">${proxima?.fecha||'—'}</b></div>
           <div style="color:var(--muted)">Saldo pendiente<br><b>${PC.fmt(PC.totalPrestamo(p)-PC.totalPagado(p))}</b></div>
         </div>
-      </div>`;
+      </div>
+      ${tieneRetraso ? `
+      <div style="background:rgba(255,71,87,0.08);border:2px solid rgba(255,71,87,0.35);border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-weight:700;color:var(--danger);font-size:0.95rem;margin-bottom:10px">
+          ⚠️ Cuota vencida — ${cuotaInfo.diasRetraso} días de retraso
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;text-align:center">
+          <div style="background:var(--surface2);border-radius:8px;padding:10px">
+            <div style="font-size:0.7rem;color:var(--muted)">Cuota original</div>
+            <div style="font-weight:700;font-size:1rem">${PC.fmt(proxima.monto)}</div>
+          </div>
+          <div style="background:rgba(255,71,87,0.1);border-radius:8px;padding:10px">
+            <div style="font-size:0.7rem;color:var(--danger)">Mora (${PC.config.moraPorc||5}%)</div>
+            <div style="font-weight:700;font-size:1rem;color:var(--danger)">+${PC.fmt(moraAmt)}</div>
+          </div>
+          <div style="background:rgba(255,165,2,0.1);border-radius:8px;padding:10px">
+            <div style="font-size:0.7rem;color:var(--warn)">Total con mora</div>
+            <div style="font-weight:700;font-size:1rem;color:var(--warn)">${PC.fmt(cuotaInfo.totalConMora)}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn btn-danger" style="padding:12px;font-size:0.88rem;justify-content:center"
+            onclick="MODAL.aplicarMora(${cuotaInfo.totalConMora.toFixed(2)})">
+            💰 Cobrar con mora<br><small style="font-weight:400;opacity:0.85">${PC.fmt(cuotaInfo.totalConMora)}</small>
+          </button>
+          <button class="btn btn-ghost" style="padding:12px;font-size:0.88rem;justify-content:center"
+            onclick="MODAL.perdonarMora(${proxima.monto.toFixed(2)})">
+            🤝 Perdonar mora<br><small style="font-weight:400;opacity:0.7">${PC.fmt(proxima.monto)}</small>
+          </button>
+        </div>
+      </div>` : ''}`;
     document.getElementById('abono-fecha').value = PC.today();
-    if(proxima) document.getElementById('abono-monto').value = proxima.monto.toFixed(2);
+    const montoSugerido = tieneRetraso ? cuotaInfo.totalConMora : (proxima?.monto || 0);
+    document.getElementById('abono-monto').value = montoSugerido.toFixed(2);
     document.getElementById('abono-nota').value = '';
     this.open('modal-abono');
+  },
+  aplicarMora(total) {
+    document.getElementById('abono-monto').value = parseFloat(total).toFixed(2);
+    document.getElementById('abono-nota').value = 'Incluye interés moratorio';
+    UI.toast('Mora aplicada al cobro','⚠️');
+  },
+  perdonarMora(monto) {
+    document.getElementById('abono-monto').value = parseFloat(monto).toFixed(2);
+    document.getElementById('abono-nota').value = 'Mora perdonada';
+    UI.toast('Mora perdonada','🤝');
   },
   registrarAbono() {
     const p = PC.getPrestamo(this._abonoPrestamoId);
@@ -2997,7 +3147,7 @@ const MODAL = {
     UI.toast('Pago registrado ✅');
     // Ofrecer comprobante
     if(confirm('¿Generar comprobante de pago?')) {
-      PCPDF.abrir(PCPDF.generarComprobante(p.id, proxima.num));
+      PCPDF.abrir(PCPDF.generarComprobante(p.id, proxima.num), 'Comprobante de Pago', cl.nombre, {filename:`Comprobante_${cl.nombre}_${proxima.num}`, clienteId:p.clienteId});
     }
     // Ofrecer WA pago puntual
     const cl = PC.getCliente(p.clienteId);
@@ -3031,7 +3181,7 @@ const MODAL = {
       if(!ult) { UI.toast('No hay pagos registrados aún','⚠️'); return; }
       doc = PCPDF.generarComprobante(id, ult.num);
     }
-    if(doc) PCPDF.abrir(doc);
+    if(doc) PCPDF.abrir(doc, 'Ruta de Cobros', new Date().toLocaleDateString('es-MX'));
   },
   descargarDoc(tipo) {
     const id = this._docsPrestamoId;
@@ -4190,5 +4340,220 @@ document.addEventListener('DOMContentLoaded', () => {
 .pwa-standalone .main { padding-bottom: env(safe-area-inset-bottom, 20px); }
 </style>
 
+
+<!-- ══════════════════════════════════════════════════
+  PDF VIEWER MODAL
+══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-pdf-viewer">
+  <div style="background:var(--surface);border-radius:16px;width:96vw;max-width:780px;height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,0.7);overflow:hidden">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface)">
+      <div>
+        <div style="font-family:var(--font-head);font-weight:700;font-size:1rem" id="pdf-viewer-title">Documento</div>
+        <div style="font-size:0.75rem;color:var(--muted)" id="pdf-viewer-sub"></div>
+      </div>
+      <button class="close-btn" onclick="PDFVIEWER.cerrar()" style="width:36px;height:36px;font-size:1.1rem">✕</button>
+    </div>
+
+    <!-- Action buttons — grandes para usuario mayor -->
+    <div style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap;background:var(--surface2)">
+      <button onclick="PDFVIEWER.descargar()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--accent);color:#0a0c10;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-family:var(--font-body);font-weight:700;font-size:0.82rem;min-width:72px">
+        <span style="font-size:1.3rem">⬇️</span>Descargar
+      </button>
+      <button onclick="PDFVIEWER.compartirWA()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:#25d366;color:#fff;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-family:var(--font-body);font-weight:700;font-size:0.82rem;min-width:72px">
+        <span style="font-size:1.3rem">💬</span>WhatsApp
+      </button>
+      <button onclick="PDFVIEWER.imprimir()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 18px;cursor:pointer;font-family:var(--font-body);font-weight:600;font-size:0.82rem;min-width:72px">
+        <span style="font-size:1.3rem">🖨️</span>Imprimir
+      </button>
+      <button onclick="PDFVIEWER.abrirPestana()" style="display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 18px;cursor:pointer;font-family:var(--font-body);font-weight:600;font-size:0.82rem;min-width:72px">
+        <span style="font-size:1.3rem">🔗</span>Abrir
+      </button>
+      <!-- Navegación páginas -->
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;font-size:0.85rem;color:var(--muted)">
+        <button onclick="PDFVIEWER.paginaAnterior()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:6px 12px;cursor:pointer;font-size:1rem">◀</button>
+        <span id="pdf-page-info">Pág 1/1</span>
+        <button onclick="PDFVIEWER.paginaSiguiente()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:6px 12px;cursor:pointer;font-size:1rem">▶</button>
+      </div>
+    </div>
+
+    <!-- Canvas area -->
+    <div style="flex:1;overflow-y:auto;overflow-x:auto;background:#525659;display:flex;flex-direction:column;align-items:center;padding:16px;gap:12px" id="pdf-canvas-area">
+      <div id="pdf-loading" style="color:#fff;font-size:1rem;padding:40px;text-align:center">
+        <div style="font-size:2rem;margin-bottom:10px">⏳</div>
+        Renderizando documento...
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<style>
+#modal-pdf-viewer .modal-overlay { padding: 8px; }
+</style>
+
+<script>
+
+// ════════════════════════════════════════════════════════
+//  PDF VIEWER — PDF.js powered, mobile-friendly
+// ════════════════════════════════════════════════════════
+const PDFVIEWER = {
+  _pdfDoc: null,       // jsPDF doc object
+  _pdfJsDoc: null,     // PDF.js document
+  _currentPage: 1,
+  _totalPages: 1,
+  _pdfBytes: null,
+  _filename: 'documento',
+  _prestamoId: null,
+  _clienteId: null,
+
+  async abrir(jsPDFDoc, titulo, subtitulo, opts = {}) {
+    this._pdfDoc = jsPDFDoc;
+    this._filename = opts.filename || titulo || 'documento';
+    this._prestamoId = opts.prestamoId || null;
+    this._clienteId = opts.clienteId || null;
+    this._currentPage = 1;
+
+    document.getElementById('pdf-viewer-title').textContent = titulo || 'Documento';
+    document.getElementById('pdf-viewer-sub').textContent = subtitulo || '';
+    document.getElementById('modal-pdf-viewer').classList.add('show');
+    document.getElementById('pdf-loading').style.display = 'block';
+    document.getElementById('pdf-canvas-area').innerHTML =
+      '<div id="pdf-loading" style="color:#fff;font-size:1rem;padding:40px;text-align:center"><div style="font-size:2rem;margin-bottom:10px">⏳</div>Renderizando documento...</div>';
+
+    // Get PDF bytes from jsPDF
+    this._pdfBytes = jsPDFDoc.output('arraybuffer');
+
+    // Load PDF.js if not loaded yet
+    await this._loadPDFjs();
+    await this._renderAllPages();
+  },
+
+  async _loadPDFjs() {
+    if (window.pdfjsLib) return;
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload = () => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        resolve();
+      };
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  },
+
+  async _renderAllPages() {
+    try {
+      const loadingTask = pdfjsLib.getDocument({ data: this._pdfBytes });
+      this._pdfJsDoc = await loadingTask.promise;
+      this._totalPages = this._pdfJsDoc.numPages;
+
+      const area = document.getElementById('pdf-canvas-area');
+      area.innerHTML = '';
+
+      const isMobile = window.innerWidth < 768;
+      const targetWidth = isMobile ? window.innerWidth - 48 : Math.min(720, window.innerWidth - 80);
+
+      for (let pageNum = 1; pageNum <= this._totalPages; pageNum++) {
+        const page = await this._pdfJsDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1 });
+        const scale = targetWidth / viewport.width;
+        const scaledViewport = page.getViewport({ scale });
+
+        // Page container
+        const pageDiv = document.createElement('div');
+        pageDiv.style.cssText = `position:relative;box-shadow:0 4px 20px rgba(0,0,0,0.4);border-radius:4px;overflow:hidden;background:white;`;
+        pageDiv.id = `pdf-page-${pageNum}`;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = scaledViewport.width;
+        canvas.height = scaledViewport.height;
+        canvas.style.cssText = `display:block;width:100%;height:auto;`;
+
+        pageDiv.appendChild(canvas);
+        area.appendChild(pageDiv);
+
+        // Page number badge
+        if (this._totalPages > 1) {
+          const badge = document.createElement('div');
+          badge.style.cssText = `position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,0.5);color:white;font-size:0.7rem;padding:2px 8px;border-radius:10px;`;
+          badge.textContent = `${pageNum} / ${this._totalPages}`;
+          pageDiv.appendChild(badge);
+        }
+
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport: scaledViewport }).promise;
+      }
+
+      document.getElementById('pdf-page-info').textContent =
+        `${this._totalPages} pág${this._totalPages > 1 ? 's' : ''}`;
+
+    } catch (err) {
+      console.error('[PDFVIEWER] Render error:', err);
+      document.getElementById('pdf-canvas-area').innerHTML =
+        '<div style="color:#ff4757;padding:30px;text-align:center">❌ Error al renderizar. Usa el botón Descargar.</div>';
+    }
+  },
+
+  paginaAnterior() {
+    const pages = document.querySelectorAll('[id^="pdf-page-"]');
+    if (pages.length > 1) pages[0]?.scrollIntoView({ behavior: 'smooth' });
+  },
+  paginaSiguiente() {
+    const pages = document.querySelectorAll('[id^="pdf-page-"]');
+    if (pages.length > 1) pages[pages.length-1]?.scrollIntoView({ behavior: 'smooth' });
+  },
+
+  descargar() {
+    if (this._pdfDoc) this._pdfDoc.save(this._filename + '.pdf');
+  },
+
+  imprimir() {
+    if (!this._pdfBytes) return;
+    const blob = new Blob([this._pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    iframe.onload = () => {
+      try { iframe.contentWindow.print(); } catch(e) { window.open(url, '_blank'); }
+      setTimeout(() => { document.body.removeChild(iframe); URL.revokeObjectURL(url); }, 5000);
+    };
+  },
+
+  abrirPestana() {
+    if (this._pdfDoc) this._pdfDoc.output('dataurlnewwindow');
+  },
+
+  compartirWA() {
+    // On mobile: share the PDF download link or just open WA with context message
+    let msg = `Hola, te comparto el documento: ${this._filename}`;
+    if (this._clienteId) {
+      const cl = PC.getCliente(this._clienteId);
+      msg = `Hola ${cl.nombre.split(' ')[0]}, te adjunto tu documento de PrestamoControl: ${this._filename}. — ${PC.config.prestamistaNombre||''}`;
+    }
+    // Try Web Share API first (mobile)
+    if (navigator.share && this._pdfBytes) {
+      const blob = new Blob([this._pdfBytes], { type: 'application/pdf' });
+      const file = new File([blob], this._filename + '.pdf', { type: 'application/pdf' });
+      navigator.share({ title: this._filename, text: msg, files: [file] })
+        .catch(() => window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank'));
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+  },
+
+  cerrar() {
+    document.getElementById('modal-pdf-viewer').classList.remove('show');
+    this._pdfJsDoc = null;
+    this._pdfBytes = null;
+    this._pdfDoc = null;
+  },
+};
+
+</script>
 </body>
 </html>
