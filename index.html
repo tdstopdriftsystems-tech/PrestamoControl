@@ -444,8 +444,8 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
 .chart-bar-fill { height:100%; border-radius:4px; transition:width 0.5s; }
 .chart-bar-val { width:70px; text-align:right; font-weight:600; }
 .metrics-2x2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.metric-box { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:12px; }
-.metric-val { font-family:var(--font-head); font-size:1.3rem; font-weight:700; }
+.metric-box { background:var(--surface); border:1px solid var(--border); border-radius:9px; padding:12px; overflow:hidden; min-width:0; }
+.metric-val { font-family:var(--font-head); font-size:1.15rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .metric-lbl { font-size:0.7rem; color:var(--muted); margin-top:2px; }
 
 /* ── HELP MODAL ── */
@@ -2958,15 +2958,15 @@ const UI = {
             <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${PC.state.prestamos.length?Math.round(v/PC.state.prestamos.length*100):0}%;background:${c}"></div></div>
             <div class="chart-bar-val">${v}</div>
           </div>`).join('')}
-        <div style="text-align:center;margin-top:12px;font-family:var(--font-head);font-size:2rem;font-weight:800">${PC.state.prestamos.length}</div>
+        <div style="text-align:center;margin-top:16px;font-size:2.4rem;font-weight:800;color:var(--text);line-height:1">${PC.state.prestamos.length}</div>
         <div style="text-align:center;font-size:0.78rem;color:var(--muted)">Préstamos totales</div>
       </div>
       <div class="report-card" style="grid-column:1/-1">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;margin-bottom:16px">
           <h4 style="margin:0">👥 Top Deudores Activos</h4>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-ghost btn-sm" onclick="PCXLSX.exportarBackupCompleto()">📊 Excel Completo</button>
-            <button class="btn btn-ghost btn-sm" onclick="PC.exportBackupJSON()">💾 Backup JSON</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="PCXLSX.exportarBackupCompleto()">📊 Excel</button>
+            <button class="btn btn-ghost btn-sm" onclick="PC.exportBackupJSON()">💾 Backup</button>
           </div>
         </div>
         ${top.length?top.map(([nombre,val],i)=>`
