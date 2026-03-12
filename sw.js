@@ -3,7 +3,7 @@
 //  Estrategia: Cache-First para assets, Network-First para datos
 // ============================================================
 
-const SW_VERSION = '2.0.0';
+const SW_VERSION = '2.4.0';
 const CACHE_NAME = `prestamocontrol-v${SW_VERSION}`;
 const DATA_CACHE = `prestamocontrol-data-v${SW_VERSION}`;
 
