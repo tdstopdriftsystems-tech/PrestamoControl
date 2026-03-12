@@ -511,14 +511,13 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
   display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
 }
 .cobro-card-nombre {
-  font-weight: 600; font-size: 0.92rem;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 200px;
+  font-weight: 700; font-size: 0.94rem;
+  word-break: break-word; line-height: 1.2;
 }
-.cobro-card-tel { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
-.cobro-card-cuota { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+.cobro-card-tel { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
+.cobro-card-cuota { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
 .cobro-card-right {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0;
   flex-shrink: 0;
 }
 .cobro-card-monto {
@@ -1044,7 +1043,7 @@ img { max-width: 100%; }
     </div>
     <!-- Mobile dropdown -->
     <div class="config-tab-dropdown" id="config-tab-dropdown">
-      <select onchange="switchConfigTabByVal(this.value)" style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:0.88rem;font-family:var(--font-body);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%236b7494%22 d=%22M6 8L1 3h10z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center">
+      <select id="cfg-dropdown-select" onchange="switchConfigTabByVal(this.value)" style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:0.88rem;font-family:var(--font-body);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%236b7494%22 d=%22M6 8L1 3h10z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center">
         <option value="negocio">🏢 Negocio</option>
         <option value="financiero">💰 Financiero</option>
         <option value="apariencia">🎨 Apariencia</option>
@@ -2594,10 +2593,12 @@ const UI = {
           return `<div class="cobro-card">
             <div class="cobro-card-left">
               ${this.avatarEl(cl.nombre)}
-              <div>
+              <div style="min-width:0;flex:1">
                 <div class="cobro-card-nombre">${cl.nombre}</div>
-                <div class="cobro-card-tel">${cl.telefono||'Sin teléfono'}</div>
+                <div class="cobro-card-tel">📱 ${cl.telefono||'Sin teléfono'}</div>
+                ${cl.direccion ? `<div class="cobro-card-cuota">📍 ${cl.direccion}</div>` : ''}
                 <div class="cobro-card-cuota">Cuota ${c.num}/${p.numCuotas} · ${c.fecha}</div>
+                ${dias > 0 ? `<span class="badge badge-late" style="margin-top:4px;display:inline-block">+${dias}d vencida</span>` : ''}
               </div>
             </div>
             <div class="cobro-card-right">
@@ -4443,6 +4444,28 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pin-screen').style.display='flex';
   }
 
+  // ── CONFIG TAB SWITCHING ─────────────────────────────────
+  function switchConfigTab(tab, el) {
+    document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('cfgp-' + tab);
+    if (panel) panel.classList.add('active');
+    document.querySelectorAll('.config-tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    // Sync dropdown
+    const dd = document.getElementById('cfg-dropdown-select');
+    if (dd) dd.value = tab;
+  }
+
+  function switchConfigTabByVal(val) {
+    document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
+    const panel = document.getElementById('cfgp-' + val);
+    if (panel) panel.classList.add('active');
+    // Sync desktop tabs
+    document.querySelectorAll('.config-tab').forEach(t => {
+      t.classList.toggle('active', t.getAttribute('onclick').includes("'" + val + "'"));
+    });
+  }
+
   UI.init();
 
   // ── ANDROID BACK BUTTON ─────────────────────────────────
@@ -4450,9 +4473,9 @@ document.addEventListener('DOMContentLoaded', () => {
   history.replaceState({ pc: 'base' }, '');
   history.pushState({ pc: 'top' }, '');
 
-  window.addEventListener('popstate', function() {
-    // Immediately re-push so the user can always press back again
-    history.pushState({ pc: 'top' }, '');
+  window.addEventListener('popstate', function(e) {
+    // Immediately re-push so the user can NEVER leave the app via back
+    setTimeout(() => history.pushState({ pc: 'top' }, ''), 0);
 
     // Now handle what should close
     const compOpts = document.getElementById('modal-comprobante-opts');
