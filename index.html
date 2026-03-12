@@ -494,11 +494,17 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
 /* ── TOAST ── */
 
 /* ── CONFIG DROPDOWN (mobile) ── */
-.config-tab-dropdown { display: none; margin-bottom: 16px; }
-@media (max-width: 600px) {
-  .config-tabs { display: none !important; }
-  .config-tab-dropdown { display: block; }
+.cfg-nav-btn {
+  padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--muted);
+  font-size: 0.8rem; font-family: var(--font-body);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
+.cfg-nav-btn:hover { border-color: var(--accent); color: var(--text); }
+.cfg-nav-active { background: var(--accent) !important; color: #0d0f14 !important; border-color: var(--accent) !important; font-weight: 700; }
+/* hide old tab styles */
+.config-tabs { display: none !important; }
+.config-tab-dropdown { display: none !important; }
 
 /* ── COBRO CARDS (dashboard mobile-first) ── */
 .cobro-card {
@@ -539,26 +545,12 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
   display: flex; gap: 8px; flex-shrink: 0;
 }
 .cobro-mora-tag {
-  font-size: 0.68rem; background: var(--danger); color: #fff;
-  border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: middle;
+  font-size: 0.7rem; background: var(--danger); color: #fff;
+  border-radius: 4px; padding: 2px 6px; margin-left: 4px; vertical-align: middle;
+  font-weight: 600;
 }
-/* keep old classes for right section compat */
-.cobro-card-left { display: none; }
-.cobro-card-right { display: none; }
-.cobro-card-monto {
-  font-family: var(--font-head); font-size: 1.1rem; font-weight: 700;
-}
-.cobro-mora-tag {
-  font-size: 0.68rem; background: rgba(255,71,87,0.15);
-  color: var(--danger); padding: 1px 6px; border-radius: 10px;
-  margin-left: 4px; vertical-align: middle;
-}
-.cobro-card-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 
 @media (max-width: 480px) {
-  .cobro-card { padding: 12px 14px; }
-  .cobro-card-nombre { max-width: 140px; font-size: 0.87rem; }
-  .cobro-card-monto { font-size: 1rem; }
   .cobro-card-btns .btn-sm { padding: 7px 12px; font-size: 0.8rem; }
 }
 
@@ -625,9 +617,7 @@ img { max-width: 100%; }
 .modal { word-break: break-word; }
 
 /* Cobro cards mobile */
-.cobro-card { flex-wrap: wrap; }
-.cobro-card-nombre { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
-.cobro-card-tel, .cobro-card-cuota { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* cobro-card overrides removed - handled in main CSS block */
 
 /* Tables horizontal scroll */
 .section table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
@@ -1055,31 +1045,37 @@ img { max-width: 100%; }
 
 <!-- Configuración -->
 <div class="modal-overlay" id="modal-config">
-  <div class="modal modal-wide" style="width:680px">
+  <div class="modal modal-wide" style="width:680px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column">
     <div class="modal-title">⚙️ Configuración — PrestamoControl</div>
-    <!-- Desktop tabs -->
-    <div class="config-tabs" id="config-tabs-desktop">
-      <div class="config-tab active" onclick="switchConfigTab('negocio',this)">🏢 Negocio</div>
-      <div class="config-tab" onclick="switchConfigTab('financiero',this)">💰 Financiero</div>
-      <div class="config-tab" onclick="switchConfigTab('apariencia',this)">🎨 Apariencia</div>
-      <div class="config-tab" onclick="switchConfigTab('seguridad',this)">🔐 Seguridad</div>
-      <div class="config-tab" onclick="switchConfigTab('backup',this)">💾 Backup</div>
-      <div class="config-tab" onclick="switchConfigTab('notif',this)">🔔 Avisos</div>
+    <div id="cfg-diag-btn" style="margin-bottom:8px">
+      <button onclick="
+        var r=[];
+        var ids=['negocio','financiero','apariencia','seguridad','backup','notif'];
+        for(var i=0;i<ids.length;i++){
+          var p=document.getElementById('cfgp-'+ids[i]);
+          r.push(ids[i]+': '+(p?'OK('+p.style.display+')':'NO EXISTE'));
+        }
+        r.push('cfgSwitch: '+(typeof cfgSwitch));
+        alert(r.join('\n'));
+      " style="background:#ff4757;color:#fff;padding:6px 12px;border-radius:6px;border:none;font-size:0.75rem;cursor:pointer">
+        🔍 Diagnóstico
+      </button>
     </div>
-    <!-- Mobile dropdown -->
-    <div class="config-tab-dropdown" id="config-tab-dropdown">
-      <select id="cfg-dropdown-select" onchange="switchConfigTabByVal(this.value)" style="width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius-sm);font-size:0.88rem;font-family:var(--font-body);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 12 12%22><path fill=%22%236b7494%22 d=%22M6 8L1 3h10z%22/></svg>');background-repeat:no-repeat;background-position:right 12px center">
-        <option value="negocio">🏢 Negocio</option>
-        <option value="financiero">💰 Financiero</option>
-        <option value="apariencia">🎨 Apariencia</option>
-        <option value="seguridad">🔐 Seguridad</option>
-        <option value="backup">💾 Backup</option>
-        <option value="notif">🔔 Avisos</option>
-      </select>
+    <!-- Config nav — funciona sin funciones globales -->
+    <div id="cfg-nav" style="margin-bottom:16px">
+      <!-- Botones siempre visibles, se adaptan al ancho -->
+      <div style="display:flex;flex-wrap:wrap;gap:6px" id="cfg-btns">
+        <button class="cfg-nav-btn cfg-nav-active" data-panel="negocio"   onclick="cfgSwitch('negocio',this)">🏢 Negocio</button>
+        <button class="cfg-nav-btn"                data-panel="financiero" onclick="cfgSwitch('financiero',this)">💰 Financiero</button>
+        <button class="cfg-nav-btn"                data-panel="apariencia" onclick="cfgSwitch('apariencia',this)">🎨 Apariencia</button>
+        <button class="cfg-nav-btn"                data-panel="seguridad"  onclick="cfgSwitch('seguridad',this)">🔐 Seguridad</button>
+        <button class="cfg-nav-btn"                data-panel="backup"     onclick="cfgSwitch('backup',this)">💾 Backup</button>
+        <button class="cfg-nav-btn"                data-panel="notif"      onclick="cfgSwitch('notif',this)">🔔 Avisos</button>
+      </div>
     </div>
 
     <!-- ── NEGOCIO ── -->
-    <div class="config-panel active" id="cfgp-negocio">
+    <div class="config-panel" id="cfgp-negocio">
       <div class="config-section-title">Datos del Prestamista (aparecen en PDFs y documentos)</div>
       <div class="form-grid">
         <div class="form-group full"><label>Nombre / Razón social *</label><input type="text" id="cfg-nombre" placeholder="Ej: Juan López Préstamos"></div>
@@ -2810,26 +2806,29 @@ const UI = {
           <button class="btn btn-ghost btn-sm" onclick="UI.pdfCobros()">📄 Ruta PDF</button>
         </div>
       </div>
-      ${items.map(({p,c,dias})=>{
-        const cl=PC.getCliente(p.clienteId);
-        const mora = dias > (PC.config.diasGracia||3) ? PC.calcMora(c, dias-(PC.config.diasGracia||3)) : 0;
-        const vencida = c.fecha < hoy;
+      ${items.map(({p, c: cuota, dias})=>{
+        const cl = PC.getCliente(p.clienteId);
+        const mora = dias > (PC.config.diasGracia||3) ? PC.calcMora(cuota, dias-(PC.config.diasGracia||3)) : 0;
+        const vencida = cuota.fecha < hoy;
         const tipoWA = vencida ? 'atrasado' : 'recordatorio';
-        return `<div class="cobro-card ${vencida?'cobro-card-vencida':''}">
-          <div class="cobro-card-left">
-            ${this.avatarEl(cl.nombre)}
-            <div style="min-width:0">
+        const ac = PC.avatarColor(cl.nombre);
+        const montoFinal = mora > 0 ? cuota.monto + mora : cuota.monto;
+        const colorMonto = mora > 0 ? 'var(--danger)' : 'var(--accent)';
+        return `<div class="cobro-card ${vencida ? 'cobro-card-vencida' : ''}">
+          <div class="cobro-card-top">
+            <div class="cobro-card-avatar" style="background:${ac}22;color:${ac}">${PC.initials(cl.nombre)}</div>
+            <div class="cobro-card-info">
               <div class="cobro-card-nombre">${cl.nombre}</div>
-              <div class="cobro-card-tel">📱 ${cl.telefono||'Sin tel'}</div>
-              <div class="cobro-card-cuota">Cuota ${c.num}/${p.numCuotas} · ${c.fecha}</div>
-              ${cl.direccion?`<div class="cobro-card-cuota">📍 ${cl.direccion}</div>`:''}
-              ${dias>0?`<span class="badge badge-late">+${dias}d</span>`:''}
+              <div class="cobro-card-meta">📱 ${cl.telefono||'Sin teléfono'}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+              <div style="font-weight:800;font-size:1.1rem;color:${colorMonto}">${PC.fmt(montoFinal)}${mora>0?'<span class="cobro-mora-tag">+mora</span>':''}</div>
             </div>
           </div>
-          <div class="cobro-card-right">
-            <div class="cobro-card-monto" style="color:${mora>0?'var(--danger)':'var(--accent)'}">
-              ${PC.fmt(mora>0?c.monto+mora:c.monto)}
-              ${mora>0?`<span class="cobro-mora-tag">+mora</span>`:''}
+          <div class="cobro-card-bottom">
+            <div class="cobro-card-detalles">
+              ${cl.direccion ? `<span>📍 ${cl.direccion}</span>` : ''}
+              <span>Cuota ${cuota.num}/${p.numCuotas} · ${cuota.fecha}${dias>0?` · <span style="color:var(--danger);font-weight:600">+${dias}d vencida</span>`:''}</span>
             </div>
             <div class="cobro-card-btns">
               <button class="btn btn-primary btn-sm" onclick="MODAL.abrirAbono(${p.id})">💰 Cobrar</button>
@@ -3531,7 +3530,22 @@ const MODAL = {
   // ── CONFIGURACIÓN ─────────────────────────────────────────
   abrirConfig() {
     this.open('modal-config');
-    initConfigModal();
+    // Inicializar paneles con display directo
+    var ids = ['negocio','financiero','apariencia','seguridad','backup','notif'];
+    for (var i = 0; i < ids.length; i++) {
+      var p = document.getElementById('cfgp-' + ids[i]);
+      if (p) p.style.display = (i === 0) ? 'block' : 'none';
+    }
+    // Activar primer botón
+    var btns = document.querySelectorAll('.cfg-nav-btn');
+    for (var j = 0; j < btns.length; j++) {
+      var first = btns[j].getAttribute('data-panel') === 'negocio';
+      btns[j].style.background = first ? 'var(--accent)' : '';
+      btns[j].style.color = first ? '#0d0f14' : '';
+      btns[j].style.fontWeight = first ? '700' : '';
+      btns[j].style.borderColor = first ? 'var(--accent)' : '';
+    }
+    try { if(typeof initConfigModal==='function') initConfigModal(); } catch(e) {}
   },
   guardarConfig() {
     // Negocio
@@ -4426,12 +4440,7 @@ function checkPWAStatus() {
 // ══════════════════════════════════════════════════
 
 // Config tabs
-function switchConfigTab(name, el) {
-  document.querySelectorAll('.config-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.config-panel').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('cfgp-'+name).classList.add('active');
-}
+/* switchConfigTab moved below */
 
 // Help nav
 function showHelp(name, el) {
@@ -4474,25 +4483,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── CONFIG TAB SWITCHING ─────────────────────────────────
-  function switchConfigTab(tab, el) {
-    document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
-    const panel = document.getElementById('cfgp-' + tab);
-    if (panel) panel.classList.add('active');
-    document.querySelectorAll('.config-tab').forEach(t => t.classList.remove('active'));
-    if (el) el.classList.add('active');
-    // Sync dropdown
-    const dd = document.getElementById('cfg-dropdown-select');
-    if (dd) dd.value = tab;
+  // CONFIG TAB SWITCHER — usa display directo, sin depender de CSS cascade
+  function cfgSwitch(tab, btn) {
+    var ids = ['negocio','financiero','apariencia','seguridad','backup','notif'];
+    // Mostrar/ocultar paneles con style.display directo
+    for (var i = 0; i < ids.length; i++) {
+      var p = document.getElementById('cfgp-' + ids[i]);
+      if (p) p.style.display = (ids[i] === tab) ? 'block' : 'none';
+    }
+    // Actualizar botones
+    var btns = document.querySelectorAll('.cfg-nav-btn');
+    for (var j = 0; j < btns.length; j++) {
+      var isActive = btns[j].getAttribute('data-panel') === tab;
+      btns[j].style.background = isActive ? 'var(--accent)' : '';
+      btns[j].style.color = isActive ? '#0d0f14' : '';
+      btns[j].style.fontWeight = isActive ? '700' : '';
+      btns[j].style.borderColor = isActive ? 'var(--accent)' : '';
+    }
   }
+  function switchConfigTab(tab, el) { cfgSwitch(tab, el); }
+  function switchConfigTabByVal(val) { cfgSwitch(val, null); }
 
-  function switchConfigTabByVal(val) {
-    document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
-    const panel = document.getElementById('cfgp-' + val);
-    if (panel) panel.classList.add('active');
-    // Sync desktop tabs
-    document.querySelectorAll('.config-tab').forEach(t => {
-      t.classList.toggle('active', t.getAttribute('onclick').includes("'" + val + "'"));
-    });
+  // Inicializar config al abrir el modal
+  function abrirConfig() {
+    MODAL.open('modal-config');
+    cfgSwitch('negocio', document.querySelector('[data-panel="negocio"]'));
   }
 
   UI.init();
