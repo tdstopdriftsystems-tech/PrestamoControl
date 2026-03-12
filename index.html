@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="es" data-theme="dark">
 <head>
+  <!-- cache-bust: 20260312-104850 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <meta name="theme-color" content="#0d0f14">
@@ -235,7 +236,11 @@ body {
 .section {
   background:var(--surface); border:1px solid var(--border);
   border-radius:var(--radius); overflow:hidden; margin-bottom:20px;
+  max-width:100%;
 }
+/* Global overflow protection */
+.view { max-width:100%; overflow-x:hidden; }
+.modal { max-width:calc(100vw - 32px); }
 .section-header {
   padding:16px 20px; border-bottom:1px solid var(--border);
   display:flex; align-items:center; justify-content:space-between; gap:12px;
@@ -312,15 +317,16 @@ tr:last-child td { border-bottom:none; }
 /* ── CLIENT CARD ── */
 .client-card {
   background:var(--surface2); border:1px solid var(--border);
-  border-radius:var(--radius); padding:16px;
-  display:flex; align-items:center; gap:14px;
+  border-radius:var(--radius); padding:14px 16px;
+  display:flex; align-items:center; gap:12px;
   cursor:pointer; transition:all var(--transition); margin-bottom:8px;
+  overflow:hidden;
 }
 .client-card:hover { border-color:var(--accent); transform:translateX(3px); box-shadow:var(--shadow); }
 .client-avatar { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.95rem; flex-shrink:0; }
-.client-info { flex:1; min-width:0; }
-.client-name { font-weight:600; font-size:0.92rem; margin-bottom:2px; }
-.client-phone { font-size:0.78rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.client-info { flex:1; min-width:0; overflow:hidden; }
+.client-name { font-weight:600; font-size:0.92rem; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.client-phone { font-size:0.78rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
 .client-stats { text-align:right; flex-shrink:0; }
 .client-total { font-family:var(--font-head); font-weight:700; font-size:0.95rem; color:var(--accent); }
 .client-count { font-size:0.72rem; color:var(--muted); }
@@ -581,6 +587,26 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
   /* Mobile tables */
   .table-wrap { margin: 0 -1px; border-radius:0; }
 }
+
+/* ── GLOBAL MOBILE SAFETY ── */
+* { box-sizing: border-box; }
+img { max-width: 100%; }
+.view { overflow-x: hidden; }
+.section { overflow-x: hidden; }
+.modal { word-break: break-word; }
+
+/* Cobro cards mobile */
+.cobro-card { flex-wrap: wrap; }
+.cobro-card-nombre { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.cobro-card-tel, .cobro-card-cuota { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Tables horizontal scroll */
+.section table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* Topbar wrapping */
+.topbar { flex-wrap: wrap; gap: 8px; }
+.topbar-right { flex-wrap: wrap; gap: 6px; }
+
 </style>
 </head>
 <body>
@@ -2505,7 +2531,7 @@ const UI = {
   },
   badgeCredito(nivel) {
     const c = { excelente:'#00e5a0', bueno:'#1e90ff', regular:'#ffa502', riesgo:'#ff4757', nuevo:'#6b7494' };
-    return `<span class="badge" style="background:${c[nivel]||'#6b7494'}22;color:${c[nivel]||'#6b7494'}">${nivel}</span>`;
+    return `<span class="badge" style="flex-shrink:0;background:${c[nivel]||'#6b7494'}22;color:${c[nivel]||'#6b7494'}">${nivel}</span>`;
   },
   avatarEl(nombre, size=34) {
     const color = PC.avatarColor(nombre);
@@ -2695,23 +2721,23 @@ const UI = {
       const venc = prestamos.filter(p=>PC.estadoPrestamo(p)==='vencido').length;
       const analisis = PC.analisisCredito(c.id);
       const color = PC.avatarColor(c.nombre);
-      const fotoHtml = c.foto
-        ? `<div class="client-avatar" style="padding:0;overflow:hidden"><img src="${c.foto}" style="width:100%;height:100%;object-fit:cover"></div>`
-        : `<div class="client-avatar" style="background:${color}22;color:${color}">${PC.initials(c.nombre)}</div>`;
+      const avatarHtml = c.foto
+        ? `<img src="${c.foto}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0">`
+        : `<div class="client-avatar" style="background:${color}22;color:${color};flex-shrink:0">${PC.initials(c.nombre)}</div>`;
       return `<div class="client-card" onclick="UI.abrirDetalleCliente(${c.id})">
-        ${fotoHtml}
-        <div class="client-info">
-          <div class="client-name">${c.nombre}</div>
-          <div class="client-phone">📱 ${c.telefono||'—'} ${c.email?'· 📧 '+c.email:''}</div>
-          <div class="client-phone">📍 ${c.direccion||'—'}</div>
+        ${avatarHtml}
+        <div style="flex:1;min-width:0;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;overflow:hidden">
+            <span style="font-weight:700;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0">${c.nombre}</span>
+            ${this.badgeCredito(analisis.nivel)}
+          </div>
+          <div style="font-size:0.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.telefono||'Sin teléfono'}</div>
+          ${venc>0?`<span class="badge badge-late" style="margin-top:3px;display:inline-block">${venc} vencida${venc>1?'s':''}</span>`:''}
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          ${venc>0?`<span class="badge badge-late">${venc} vencido${venc>1?'s':''}</span>`:''}
-          ${this.badgeCredito(analisis.nivel)}
-        </div>
-        <div class="client-stats">
-          <div class="client-total">${PC.fmt(deuda)}</div>
-          <div class="client-count">${activos} activo${activos!==1?'s':''} · score ${analisis.score}</div>
+        <div style="text-align:right;flex-shrink:0;margin-left:8px">
+          <div style="font-weight:700;font-size:0.92rem;color:var(--accent)">${PC.fmt(deuda)}</div>
+          <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">${activos} activo${activos!==1?'s':''}</div>
+          <div style="font-size:0.7rem;color:var(--muted)">score ${analisis.score}</div>
         </div>
       </div>`;
     }).join('');
@@ -3041,16 +3067,13 @@ const MODAL = {
   open(id) {
     document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
     const m = document.getElementById(id);
-    if (m) {
-      m.classList.add('show');
-      this._active = id;
-      // Push state so Android back button closes modal
-      history.pushState({ modal: id }, '', window.location.href);
-    }
+    if (m) { m.classList.add('show'); this._active = id; }
   },
   close(id) {
-    const m = document.getElementById(id || this._active);
+    const target = id || this._active;
+    const m = document.getElementById(target);
     if (m) m.classList.remove('show');
+    if (this._active === target || !id) this._active = null;
   },
   closeAll() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show')); },
 
@@ -3389,7 +3412,7 @@ const MODAL = {
         </div>
       </div>`;
     document.body.appendChild(modal);
-    history.pushState({ modal: 'modal-comprobante-opts' }, '', window.location.href);
+
   },
   aplicarMora(total) {
     document.getElementById('abono-monto').value = parseFloat(total).toFixed(2);
@@ -4417,13 +4440,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
   UI.init();
 
-  // Android back button — close modal instead of leaving app
-  window.addEventListener('popstate', (e) => {
+  // ── ANDROID BACK BUTTON ─────────────────────────────────
+  // Strategy: always keep 2 history entries so back never exits
+  history.replaceState({ pc: 'base' }, '');
+  history.pushState({ pc: 'top' }, '');
+
+  window.addEventListener('popstate', function() {
+    // Immediately re-push so the user can always press back again
+    history.pushState({ pc: 'top' }, '');
+
+    // Now handle what should close
+    const compOpts = document.getElementById('modal-comprobante-opts');
+    if (compOpts) { compOpts.remove(); return; }
+
+    const pdfViewer = document.getElementById('modal-pdf-viewer');
+    if (pdfViewer && pdfViewer.classList.contains('show')) {
+      PDFVIEWER.cerrar(); return;
+    }
+
     if (MODAL._active) {
-      MODAL.close(MODAL._active);
-    } else if (UI._detailOpen) {
-      document.getElementById('detail-panel')?.classList.remove('open');
+      MODAL.close(MODAL._active); return;
+    }
+
+    const dp = document.getElementById('detail-panel');
+    if (dp && dp.classList.contains('open')) {
+      dp.classList.remove('open');
       UI._detailOpen = false;
+      return;
     }
   });
 
@@ -4706,7 +4749,7 @@ const PDFVIEWER = {
     document.getElementById('pdf-viewer-title').textContent = titulo || 'Documento';
     document.getElementById('pdf-viewer-sub').textContent = subtitulo || '';
     document.getElementById('modal-pdf-viewer').classList.add('show');
-    history.pushState({ modal: 'modal-pdf-viewer' }, '', window.location.href);
+    // history managed by global popstate handler
     document.getElementById('pdf-canvas-area').innerHTML =
       '<div id="pdf-loading" style="color:#fff;font-size:1rem;padding:40px;text-align:center"><div style="font-size:2rem;margin-bottom:10px;animation:spin 1s linear infinite;display:inline-block">⏳</div><br>Generando documento...</div>';
 
