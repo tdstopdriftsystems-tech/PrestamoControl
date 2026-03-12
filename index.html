@@ -323,10 +323,11 @@ tr:last-child td { border-bottom:none; }
 .client-card {
   background:var(--surface2); border:1px solid var(--border);
   border-radius:var(--radius); padding:14px 16px;
-  display:flex; align-items:center; gap:12px;
+  display:flex; flex-direction:column; gap:8px;
   cursor:pointer; transition:all var(--transition); margin-bottom:8px;
-  overflow:hidden; min-height:72px;
+  overflow:hidden;
 }
+.client-card:hover { border-color:var(--accent); box-shadow:var(--shadow); }
 .client-card:hover { border-color:var(--accent); transform:translateX(3px); box-shadow:var(--shadow); }
 .client-avatar { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.95rem; flex-shrink:0; }
 .client-info { flex:1; min-width:0; overflow:hidden; }
@@ -501,25 +502,49 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
 
 /* ── COBRO CARDS (dashboard mobile-first) ── */
 .cobro-card {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 18px; border-bottom: 1px solid var(--border);
-  gap: 12px; flex-wrap: wrap;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 10px;
 }
 .cobro-card:last-child { border-bottom: none; }
 .cobro-card-vencida { background: rgba(255,71,87,0.04); }
-.cobro-card-left {
-  display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
+.cobro-card-top {
+  display: flex; align-items: center; gap: 10px;
 }
+.cobro-card-avatar {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 0.85rem; flex-shrink: 0;
+}
+.cobro-card-info { flex: 1; min-width: 0; }
 .cobro-card-nombre {
-  font-weight: 700; font-size: 0.94rem;
-  word-break: break-word; line-height: 1.2;
+  font-weight: 700; font-size: 1rem; line-height: 1.25;
+  color: var(--text); word-break: break-word;
 }
-.cobro-card-tel { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
-.cobro-card-cuota { font-size: 0.8rem; color: var(--muted); margin-top: 3px; }
-.cobro-card-right {
-  display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex-shrink: 0;
-  flex-shrink: 0;
+.cobro-card-meta {
+  font-size: 0.78rem; color: var(--muted); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.cobro-card-monto-big {
+  font-weight: 800; font-size: 1.15rem; flex-shrink: 0; text-align: right;
+}
+.cobro-card-bottom {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+.cobro-card-detalles {
+  font-size: 0.78rem; color: var(--muted); display: flex; flex-direction: column; gap: 2px;
+}
+.cobro-card-btns {
+  display: flex; gap: 8px; flex-shrink: 0;
+}
+.cobro-mora-tag {
+  font-size: 0.68rem; background: var(--danger); color: #fff;
+  border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: middle;
+}
+/* keep old classes for right section compat */
+.cobro-card-left { display: none; }
+.cobro-card-right { display: none; }
 .cobro-card-monto {
   font-family: var(--font-head); font-size: 1.1rem; font-weight: 700;
 }
@@ -2727,23 +2752,27 @@ const UI = {
       const venc = prestamos.filter(p=>PC.estadoPrestamo(p)==='vencido').length;
       const analisis = PC.analisisCredito(c.id);
       const color = PC.avatarColor(c.nombre);
-      const avatarHtml = c.foto
-        ? `<img src="${c.foto}" style="width:44px;height:44px;border-radius:10px;object-fit:cover;flex-shrink:0">`
-        : `<div class="client-avatar" style="background:${color}22;color:${color};flex-shrink:0">${PC.initials(c.nombre)}</div>`;
+      const avatarContent = c.foto
+        ? `<img src="${c.foto}" style="width:44px;height:44px;border-radius:10px;object-fit:cover">`
+        : `<div style="width:44px;height:44px;border-radius:10px;background:${color}22;color:${color};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.9rem;flex-shrink:0">${PC.initials(c.nombre)}</div>`;
       return `<div class="client-card" onclick="UI.abrirDetalleCliente(${c.id})">
-        ${avatarHtml}
-        <div style="flex:1;min-width:0;overflow:hidden">
-          <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;flex-wrap:wrap">
-            <span style="font-weight:700;font-size:0.9rem;line-height:1.2;word-break:break-word;flex:1;min-width:0">${c.nombre}</span>
-            ${this.badgeCredito(analisis.nivel)}
+        <!-- Fila 1: avatar + nombre + monto -->
+        <div style="display:flex;align-items:center;gap:10px;width:100%">
+          <div style="flex-shrink:0">${avatarContent}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:0.97rem;line-height:1.25;word-break:break-word">${c.nombre}</div>
+            <div style="font-size:0.78rem;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.telefono||'Sin teléfono'}</div>
           </div>
-          <div style="font-size:0.76rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.telefono||'Sin teléfono'}</div>
-          ${venc>0?`<span class="badge badge-late" style="margin-top:3px;display:inline-block">${venc} vencida${venc>1?'s':''}</span>`:''}
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-weight:800;font-size:0.95rem;color:var(--accent)">${PC.fmt(deuda)}</div>
+            <div style="font-size:0.7rem;color:var(--muted);margin-top:2px">${activos} activo${activos!==1?'s':''}</div>
+          </div>
         </div>
-        <div style="text-align:right;flex-shrink:0;margin-left:8px">
-          <div style="font-weight:700;font-size:0.92rem;color:var(--accent)">${PC.fmt(deuda)}</div>
-          <div style="font-size:0.72rem;color:var(--muted);margin-top:2px">${activos} activo${activos!==1?'s':''}</div>
-          <div style="font-size:0.7rem;color:var(--muted)">score ${analisis.score}</div>
+        <!-- Fila 2: badge + score + vencidas -->
+        <div style="display:flex;align-items:center;gap:6px;padding-left:54px;flex-wrap:wrap">
+          ${this.badgeCredito(analisis.nivel)}
+          <span style="font-size:0.7rem;color:var(--muted)">score ${analisis.score}</span>
+          ${venc>0?`<span class="badge badge-late">${venc} vencida${venc>1?'s':''}</span>`:''}
         </div>
       </div>`;
     }).join('');
