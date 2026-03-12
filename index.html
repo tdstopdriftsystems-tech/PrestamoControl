@@ -627,6 +627,26 @@ img { max-width: 100%; }
 .topbar-right { flex-wrap: wrap; gap: 6px; }
 
 </style>
+<script>
+  // CONFIG TAB SWITCHER — definido en <head> para disponibilidad inmediata
+  function cfgSwitch(tab, btn) {
+    var ids = ['negocio','financiero','apariencia','seguridad','backup','notif'];
+    for (var i = 0; i < ids.length; i++) {
+      var p = document.getElementById('cfgp-' + ids[i]);
+      if (p) p.style.display = (ids[i] === tab) ? 'block' : 'none';
+    }
+    var btns = document.querySelectorAll('.cfg-nav-btn');
+    for (var j = 0; j < btns.length; j++) {
+      var active = btns[j].getAttribute('data-panel') === tab;
+      btns[j].style.background  = active ? 'var(--accent)' : '';
+      btns[j].style.color       = active ? '#0d0f14' : '';
+      btns[j].style.fontWeight  = active ? '700' : '';
+      btns[j].style.borderColor = active ? 'var(--accent)' : '';
+    }
+  }
+  function switchConfigTab(tab, el)  { cfgSwitch(tab, el); }
+  function switchConfigTabByVal(val) { cfgSwitch(val, null); }
+</script>
 </head>
 <body>
 
@@ -4483,32 +4503,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── CONFIG TAB SWITCHING ─────────────────────────────────
-  // CONFIG TAB SWITCHER — usa display directo, sin depender de CSS cascade
-  function cfgSwitch(tab, btn) {
-    var ids = ['negocio','financiero','apariencia','seguridad','backup','notif'];
-    // Mostrar/ocultar paneles con style.display directo
-    for (var i = 0; i < ids.length; i++) {
-      var p = document.getElementById('cfgp-' + ids[i]);
-      if (p) p.style.display = (ids[i] === tab) ? 'block' : 'none';
-    }
-    // Actualizar botones
-    var btns = document.querySelectorAll('.cfg-nav-btn');
-    for (var j = 0; j < btns.length; j++) {
-      var isActive = btns[j].getAttribute('data-panel') === tab;
-      btns[j].style.background = isActive ? 'var(--accent)' : '';
-      btns[j].style.color = isActive ? '#0d0f14' : '';
-      btns[j].style.fontWeight = isActive ? '700' : '';
-      btns[j].style.borderColor = isActive ? 'var(--accent)' : '';
-    }
-  }
-  function switchConfigTab(tab, el) { cfgSwitch(tab, el); }
-  function switchConfigTabByVal(val) { cfgSwitch(val, null); }
-
-  // Inicializar config al abrir el modal
-  function abrirConfig() {
-    MODAL.open('modal-config');
-    cfgSwitch('negocio', document.querySelector('[data-panel="negocio"]'));
-  }
+  /* cfgSwitch moved to <head> */
 
   UI.init();
 
