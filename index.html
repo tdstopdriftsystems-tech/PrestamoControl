@@ -40,7 +40,7 @@
   --base-font: 15px;
   --font-head: 'Syne', sans-serif;
   --font-body: 'DM Sans', sans-serif;
-  --sidebar-w: 260px;
+  --sidebar-w: 220px;
   --radius: 12px;
   --radius-sm: 8px;
   --transition: 0.15s ease;
@@ -108,7 +108,7 @@ body {
   transition: transform 0.25s ease;
 }
 .logo {
-  padding: 20px 16px 16px;
+  padding: 18px 14px 14px;
   border-bottom: 1px solid var(--border);
   overflow: hidden;
 }
@@ -121,9 +121,10 @@ body {
   justify-content: center; font-size: 1.1rem;
 }
 .logo h1 {
-  font-family: var(--font-head); font-size: 1rem;
+  font-family: var(--font-head); font-size: 0.95rem;
   font-weight: 800; letter-spacing: -0.3px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%;
 }
 .logo h1 span { color: var(--accent); }
 .logo-sub {
@@ -610,7 +611,7 @@ input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
   <div class="logo">
     <div class="logo-mark">
       <div class="logo-icon">💰</div>
-      <h1>Prestamo<span>Control</span></h1>
+      <h1 id="logo-title">Prestamo<span>Control</span></h1>
     </div>
     <div class="logo-sub"><span id="sb-nombre">PrestamoControl</span></div>
   </div>
@@ -2482,7 +2483,8 @@ const UI = {
       .filter(p=>PC.estadoPrestamo(p)!=='pagado')
       .reduce((a,p)=>a+(PC.totalPrestamo(p)-PC.totalPagado(p)),0);
     document.getElementById('sb-capital').textContent = PC.fmt(por);
-    document.getElementById('sb-nombre').textContent = PC.config.prestamistaNombre || 'PrestamoControl';
+    const sbNom = PC.config.prestamistaNombre || 'PrestamoControl';
+    document.getElementById('sb-nombre').textContent = sbNom.length > 18 ? sbNom.substring(0,16)+'…' : sbNom;
     // Cobros hoy badge
     const n = this._cobrosHoyCount();
     const badge = document.getElementById('badge-cobros');
@@ -2951,11 +2953,12 @@ const UI = {
       <div style="text-align:center;margin-bottom:20px">
         <div style="width:64px;height:64px;border-radius:16px;background:${color}22;color:${color};display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;margin-bottom:8px">${PC.initials(c.nombre)}</div>
       </div>
-      <div class="dp-actions" style="grid-template-columns:1fr 1fr">
+      <div class="dp-actions" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
         <button class="btn btn-primary" onclick="UI.waLink2(${id},null,'recordatorio')">💬 WhatsApp</button>
-        <button class="btn btn-ghost" onclick="MODAL.abrirNuevoPrestamo(${id})">+ Préstamo</button>
-        <button class="btn btn-ghost" onclick="const _cl=PC.getCliente(${id});PCPDF.abrir(PCPDF.generarEstadoCuenta(${id}),'Estado de Cuenta',_cl.nombre,{clienteId:${id}})">📄 PDF Estado</button>
-        <button class="btn btn-ghost" onclick="UI.eliminarCliente(${id})">🗑️ Eliminar</button>
+        <button class="btn btn-ghost" onclick="MODAL.abrirNuevoPrestamo(${id})">💰 Préstamo</button>
+        <button class="btn btn-ghost" onclick="MODAL.abrirEditarCliente(${id})">✏️ Editar cliente</button>
+        <button class="btn btn-ghost" onclick="UI.verEstadoCuenta(${id})">📄 Estado PDF</button>
+        <button class="btn btn-ghost" style="color:var(--danger)" onclick="UI.eliminarCliente(${id})">🗑️ Eliminar</button>
       </div>
       <!-- Score crediticio -->
       <div style="background:${nc}15;border:1px solid ${nc}44;border-radius:12px;padding:14px;margin-bottom:16px">
@@ -4703,9 +4706,9 @@ const PDFVIEWER = {
     document.getElementById('pdf-viewer-title').textContent = titulo || 'Documento';
     document.getElementById('pdf-viewer-sub').textContent = subtitulo || '';
     document.getElementById('modal-pdf-viewer').classList.add('show');
-    document.getElementById('pdf-loading').style.display = 'block';
+    history.pushState({ modal: 'modal-pdf-viewer' }, '', window.location.href);
     document.getElementById('pdf-canvas-area').innerHTML =
-      '<div id="pdf-loading" style="color:#fff;font-size:1rem;padding:40px;text-align:center"><div style="font-size:2rem;margin-bottom:10px">⏳</div>Renderizando documento...</div>';
+      '<div id="pdf-loading" style="color:#fff;font-size:1rem;padding:40px;text-align:center"><div style="font-size:2rem;margin-bottom:10px;animation:spin 1s linear infinite;display:inline-block">⏳</div><br>Generando documento...</div>';
 
     // Get PDF bytes from jsPDF
     this._pdfBytes = jsPDFDoc.output('arraybuffer');
